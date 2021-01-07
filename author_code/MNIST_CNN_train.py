@@ -15,7 +15,7 @@ import scipy.io as sio
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default='fmnist', help='folder name')
+parser.add_argument('--model', type=str, default='mnist', help='folder name')
 parser.add_argument('--epochs', type=int, default=50, help='number of epochs of training')
 parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
 parser.add_argument('--c_dim', type=int, default=1, help='number of color channels in the input image')
@@ -38,7 +38,7 @@ newClass = range(0,y_dim)
 test_size = 100
 
 #save_folder = '/home/mnorko/Documents/Tensorflow/causal_vae/' + opt.model + '_batch' + str(batch_size)  + '_lr' + str(opt.lr) + '/'
-save_folder = '/home/mnorko/Documents/Tensorflow/causal_vae/results/' + opt.model + '_batch' + str(batch_size) + '_lr' + str(opt.lr) + '_class' + class_use_str[1:(len(class_use_str)-1):2] + '/'
+save_folder = 'results' + opt.model + '_batch' + str(batch_size) + '_lr' + str(opt.lr) + '_class' + class_use_str[1:(len(class_use_str)-1):2] + '/'
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
 # Device configuration
