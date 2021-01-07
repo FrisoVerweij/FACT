@@ -1,6 +1,7 @@
 """
  Contains all the utilities to load the MNIST dataset
 """
+import torch
 from torch.utils.data import Subset
 from torch.utils.data.dataloader import DataLoader
 from torchvision.datasets import MNIST
@@ -30,6 +31,7 @@ def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include:l
 
     return train_dataloader, test_dataloader
 
+
 def get_indices(dataset, digits):
     '''
     Returns indices of given digits in dataset
@@ -43,13 +45,3 @@ def get_indices(dataset, digits):
             indices.append(i)
 
     return indices
-
-
-
-
-
-
-
-
-
-
