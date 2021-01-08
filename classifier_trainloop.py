@@ -158,6 +158,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset', type=str, default="mnist", choices=["mnist"],
                         help="dataset to train on")
     parser.add_argument('--mnist_digits', type=str, default="None",
-                        help="list of digits to include in the dataset. If nothing is given, all are included")
+                        help="list of digits to include in the dataset. If nothing is given, all are included. "
+                             "E.g. --mnist_digits=3,8 to include just 3 and 8")
 
     train(parser.parse_args(), 1)
