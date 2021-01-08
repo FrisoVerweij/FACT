@@ -74,7 +74,7 @@ def train(flags, seed):
             accuracy = total_correct / total_comparisons
             print("[Test Epoch %d/%d] [corr: %f]" % (epoch, flags.epochs, accuracy))
 
-    torch.save(model.state_dict(), "./models/" + str(flags.model))
+    torch.save(model.state_dict(), str(flags.save_dir) + str(flags.model))
     return model
 
 
@@ -109,7 +109,7 @@ def select_model(flags):
             output_dim = 10
         else:
             output_dim = len(flags.mnist_digits.split(','))
-        return MNIST_CNN_model.MNIST_CNN(10)
+        return MNIST_CNN_model.MNIST_CNN(output_dim)
     else:
         raise Exception("No valid model selected!")
 
@@ -144,6 +144,10 @@ if __name__ == "__main__":
                         help='learning rate')
     parser.add_argument('--momentum', type=float, default=0.5,
                         help='momentum term')
+
+    parser.add_argument('--save_dir', type=str, default="./pretrained_models_local/",
+                        help="directory to save the model")
+
 
     # New possible hyperparameters
     parser.add_argument('--optimizer', type=str, default='SGD', choices=['SGD', 'Adam'],
