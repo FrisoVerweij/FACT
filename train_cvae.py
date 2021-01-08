@@ -8,7 +8,7 @@ from MNIST_CNN_model import MNIST_CNN
 from MNIST_cvae_model import Encoder, Decoder
 
 
-def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect=True,
+def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect=False,
                lam_ML=0.000001, ):
     # --- train ---
     for i in range(n_epochs):
@@ -20,12 +20,18 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
             latent_out, mu, logvar = encoder(inputs)
             x_generated = decoder(latent_out)
             nll, nll_mse, nll_kld = VAE_LL_loss(inputs, x_generated, logvar, mu)
+            #print(nll)
 
-            causalEffect, ceDebug = joint_uncond(params, decoder, classifier, device)
-            loss = use_causal_effect * causalEffect + lam_ML * nll
-
+            #causalEffect, ceDebug = joint_uncond(params, decoder, classifier, device)
+            #print(causalEffect)
+            #loss = use_causal_effect * causalEffect + lam_ML * nll
+            loss = nll
             loss.backward()
             optimizer.step()
+
+            print(loss.item())
+        print(i)
+
 
 
 def VAE_LL_loss(Xbatch, Xest, logvar, mu):
@@ -64,29 +70,31 @@ def joint_uncond(params, decoder, classifier, device):
 def load_pretrained_mnist(model, PATH, *args, **kwargs):
     modelB = model(*args, **kwargs)
     modelB.load_state_dict(torch.load(PATH), strict=False)
-
+    return modelB
 
 if __name__ == "__main__":
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     n_beta = 2
     n_alpha = 1
+    z_dim = n_alpha + n_beta
     x_dim = 28 * 28
 
     z_dim = n_alpha + n_beta
 
-    encoder = Encoder(n_beta, n_alpha, x_dim)
-    decoder = Decoder(n_beta, n_alpha, x_dim)
+    encoder = Encoder(z_dim, 1, x_dim).to(device)
+    decoder = Decoder(z_dim, 1, x_dim).to(device)
 
     PATH = './pretrained_models_local/mnist_cnn'
 
-    classifier = load_pretrained_mnist(MNIST_CNN, PATH, 2)
+    classifier = load_pretrained_mnist(MNIST_CNN, PATH, 2).to(device)
 
     train_dataset, test_dataset = MNIST.get_mnist_dataloaders(batch_size=64, digits_to_include=[3, 8])
     n_epochs = 10
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
     params_use = list(decoder.parameters()) + list(encoder.parameters())
     lr = 0.0001
-    b1 = 0.5,
-    b2 = 0.999,
+    b1 = 0.5
+    b2 = 0.999
     optimizer = torch.optim.Adam(params_use, lr=lr, betas=(b1, b2))
 
     params = {

@@ -8,7 +8,7 @@ from torchvision.datasets import MNIST
 from torchvision.transforms import transforms
 
 
-def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include:list=None):
+def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: list = None):
     '''
     Loads the mnist train and test set into a dataloader
     :param root: dir to save dataset
@@ -17,31 +17,38 @@ def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include:l
     :return: DataLoader: train_dataloader, DataLoader: test_dataloader.
     '''
     transform = transforms.Compose([transforms.ToTensor()])
-    mnist_train_dataset = MNIST(root=root, download=True, train=True, transform=transform)
-    mnist_test_dataset = MNIST(root=root, download=True, train=False, transform=transform)
 
-    if digits_to_include != None:
-        train_indices = get_indices(mnist_train_dataset, digits_to_include)
-        test_indices = get_indices(mnist_test_dataset, digits_to_include)
-        mnist_train_dataset = Subset(mnist_train_dataset, train_indices)
+    if digits_to_include == None:
+        mnist_train_dataset = MNIST(root=root, download=True, train=True, transform=transform)
+        mnist_test_dataset = MNIST(root=root, download=True, train=False, transform=transform)
+
+    else:
+        digit_filter_function = lambda x: digits_to_include.index(x) if x in digits_to_include else -1
+
+        mnist_train_dataset = MNIST(root=root, download=True, train=True, transform=transform,
+                                    target_transform=digit_filter_function)
+        mnist_test_dataset = MNIST(root=root, download=True, train=False, transform=transform,
+                                   target_transform=digit_filter_function)
+        train_indices = get_indices(mnist_train_dataset)
+        test_indices = get_indices(mnist_test_dataset)
+        mnist_train_dataset = Subset(mnist_train_dataset, train_indices, )
         mnist_test_dataset = Subset(mnist_test_dataset, test_indices)
 
     train_dataloader = DataLoader(mnist_train_dataset, shuffle=True, batch_size=batch_size, )
-    test_dataloader =  DataLoader(mnist_test_dataset, shuffle=True, batch_size=batch_size, )
+    test_dataloader = DataLoader(mnist_test_dataset, shuffle=True, batch_size=batch_size, )
 
     return train_dataloader, test_dataloader
 
 
-def get_indices(dataset, digits):
+def get_indices(dataset):
     '''
-    Returns indices of given digits in dataset
+    Returns indices of datapoint that have a non-negative label.
     :param dataset: dataset to get indices from
-    :param digits: list of digits to find indices of
     :return: list: indices
     '''
     indices = []
     for i, (x, y) in enumerate(dataset):
-        if y in digits:
+        if y != -1:
             indices.append(i)
 
     return indices
