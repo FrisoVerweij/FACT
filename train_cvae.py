@@ -8,7 +8,7 @@ from MNIST_CNN_model import MNIST_CNN
 from MNIST_cvae_model import Encoder, Decoder
 
 
-def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect=False,
+def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect=True,
                lam_ML=0.000001, ):
     # --- train ---
     for i in range(n_epochs):
@@ -20,18 +20,16 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
             latent_out, mu, logvar = encoder(inputs)
             x_generated = decoder(latent_out)
             nll, nll_mse, nll_kld = VAE_LL_loss(inputs, x_generated, logvar, mu)
-            #print(nll)
 
-            #causalEffect, ceDebug = joint_uncond(params, decoder, classifier, device)
-            #print(causalEffect)
-            #loss = use_causal_effect * causalEffect + lam_ML * nll
-            loss = nll
+            causalEffect, ceDebug = joint_uncond(params, decoder, classifier, device)
+
+            loss = use_causal_effect * causalEffect + lam_ML * nll
+
             loss.backward()
             optimizer.step()
 
             print(loss.item())
         print(i)
-
 
 
 def VAE_LL_loss(Xbatch, Xest, logvar, mu):
@@ -47,7 +45,7 @@ def joint_uncond(params, decoder, classifier, device):
     eps = 1e-8
     I = 0.0
     q = torch.zeros(params['number_of_classes']).to(device)
-    zs = np.zeros((params['alpha_samples'] * params['beta_samples'], params['z_dim']))
+    zs = np.zeros((params['alpha_samples'] + params['beta_samples'], params['z_dim']))  ### placeholder for the samples
     for i in range(0, params['alpha_samples']):
         alpha = np.random.randn(params['n_alpha'])
         zs = np.zeros((params['beta_samples'], params['z_dim']))
@@ -57,10 +55,11 @@ def joint_uncond(params, decoder, classifier, device):
             zs[j, params['n_alpha']:] = beta
         # decode and classify batch of Nbeta samples with same alpha
         xhat = decoder(torch.from_numpy(zs).float().to(device))
-        yhat = classifier(xhat)[0]
+        yhat = classifier(xhat)[1]
         p = 1. / float(params['beta_samples']) * torch.sum(yhat, 0)  # estimate of p(y|alpha)
         I = I + 1. / float(params['alpha_samples']) * torch.sum(torch.mul(p, torch.log(p + eps)))
         q = q + 1. / float(params['alpha_samples']) * p  # accumulate estimate of p(y)
+
     I = I - torch.sum(torch.mul(q, torch.log(q + eps)))
     negCausalEffect = -I
     info = {"xhat": xhat, "yhat": yhat}
@@ -71,6 +70,7 @@ def load_pretrained_mnist(model, PATH, *args, **kwargs):
     modelB = model(*args, **kwargs)
     modelB.load_state_dict(torch.load(PATH), strict=False)
     return modelB
+
 
 if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -99,8 +99,8 @@ if __name__ == "__main__":
 
     params = {
         "number_of_classes": 2,
-        "alpha_samples": 64,
-        "beta_samples": 64,
+        "alpha_samples": 10,
+        "beta_samples": 10,
         "z_dim": z_dim,
         "n_alpha": n_alpha,
         "n_beta": n_beta
