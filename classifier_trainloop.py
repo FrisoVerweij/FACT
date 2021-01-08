@@ -140,14 +140,10 @@ if __name__ == "__main__":
                         help='number of epochs of training')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='size of the batches')
-    parser.add_argument('--c_dim', type=int, default=1,
-                        help='number of color channels in the input image')
     parser.add_argument('--lr', type=float, default=0.1,
                         help='learning rate')
     parser.add_argument('--momentum', type=float, default=0.5,
                         help='momentum term')
-    parser.add_argument('--gamma', type=float, default=0.7,
-                        help='adam: momentum term')
 
     # New possible hyperparameters
     parser.add_argument('--optimizer', type=str, default='SGD', choices=['SGD', 'Adam'],
