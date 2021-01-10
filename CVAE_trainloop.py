@@ -33,8 +33,8 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
             print(loss.item())
         print(i)
 
-    torch.save(encoder.state_dict(), str(config['save_dir']) + str(config['model_name']))
-    torch.save(decoder.state_dict(), str(config['save_dir']) + str(config['model_name']))
+    torch.save(encoder.state_dict(), str(config['save_dir']) + str(config['model_name']) + "_encoder")
+    torch.save(decoder.state_dict(), str(config['save_dir']) + str(config['model_name']) + "_decoder")
 
     return encoder, decoder
 
@@ -88,12 +88,10 @@ if __name__ == "__main__":
 
     config = yaml.load(open(args.config, "r"))
 
-    n_beta = 2
-    n_alpha = 1
-    z_dim = n_alpha + n_beta
-    x_dim = 28 * 28
+    z_dim = config['n_alpha'] + config['n_beta']
+    x_dim = config['image_size']**2
 
-    z_dim = n_alpha + n_beta
+    z_dim = config['n_alpha'] + config['n_beta']
 
     encoder = Encoder(z_dim, 1, x_dim).to(device)
     decoder = Decoder(z_dim, 1, x_dim).to(device)
@@ -102,23 +100,22 @@ if __name__ == "__main__":
 
     classifier = load_pretrained_mnist(MNIST_CNN, PATH, 2).to(device)
 
-    train_dataset, test_dataset = MNIST_dataloader.get_mnist_dataloaders(batch_size=64, digits_to_include=[3, 8])
-    n_epochs = 10
+    train_dataset, test_dataset = MNIST_dataloader.get_mnist_dataloaders(batch_size=config['batch_size'], digits_to_include=config['mnist_digits'])
 
+    # todo: all these params should also be in config file, but maybe there should be a separate one for classifier/cvae
     params_use = list(decoder.parameters()) + list(encoder.parameters())
     lr = 0.0001
     b1 = 0.5
     b2 = 0.999
     optimizer = torch.optim.Adam(params_use, lr=lr, betas=(b1, b2))
-
     params = {
         "number_of_classes": 2,
         "alpha_samples": 10,
         "beta_samples": 10,
         "z_dim": z_dim,
-        "n_alpha": n_alpha,
-        "n_beta": n_beta
+        "n_alpha": config['n_alpha'],
+        "n_beta": config['n_beta']
     }
 
-    encoder, decoder = train_cvae(encoder, decoder, classifier, train_dataset, n_epochs, optimizer, device, params, config)
+    encoder, decoder = train_cvae(encoder, decoder, classifier, train_dataset, config['epochs'], optimizer, device, params, config)
 

@@ -7,6 +7,26 @@ from torch.utils.data.dataloader import DataLoader
 from torchvision.datasets import MNIST
 from torchvision.transforms import transforms
 
+def select_dataloader(config):
+    '''
+    Selects a dataloader given the hyperparameters
+    :config: Set of hyperparameters
+    :return: DataLoader
+    '''
+    if config['dataset'] == "mnist":
+        # Parse the list of digits to include
+        if config['mnist_digits'] == "None":
+            mnist_digits = None
+        else:
+            # mnist_digits = config['mnist_digits'].split(',')
+            # mnist_digits = [int(digit) for digit in mnist_digits]
+            mnist_digits = config['mnist_digits']
+
+        # return dataloader
+        return get_mnist_dataloaders(batch_size=config['batch_size'], digits_to_include=mnist_digits)
+    else:
+        raise Exception("No valid dataset selected!")
+
 
 def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: list = None):
     '''

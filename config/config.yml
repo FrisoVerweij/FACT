@@ -1,0 +1,23 @@
+model: mnist_cnn # only used in select_model function
+model_name: mnist_cvae # change this everytime you train a new model
+epochs: 50
+batch_size: 128
+lr: 0.1
+momentum: 0.5
+
+save_dir: "./pretrained_models_local/"
+optimizer: "SGD" # choices: SGD, Adam
+device: "cuda" # choices: cuda, cpu
+dataset: "mnist"
+#mnist_digits: "3, 8" #choices: list of numbers as str, or None to default to all 10 numbers
+mnist_digits: [3, 8]
+
+sampler: "default"
+embed: False
+dropout: False
+freeze: []
+
+### CVAE-specific
+image_size: 28
+n_alpha: 4
+n_beta: 4

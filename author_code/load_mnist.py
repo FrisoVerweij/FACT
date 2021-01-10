@@ -5,7 +5,7 @@ import numpy as np
 import scipy.io as sio
 
 def load_mnist_idx(data_type):
-       data_dir = 'datasets/mnist/'
+       data_dir = 'datasets/MNIST/raw/'
        fd = open(os.path.join(data_dir,'train-images.idx3-ubyte'))
        loaded = np.fromfile(file=fd,dtype=np.uint8)
        trX = loaded[16:].reshape((60000,28,28,1)).astype(np.float)
