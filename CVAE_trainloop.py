@@ -2,13 +2,15 @@ from datetime import time
 
 import torch
 import numpy as np
+import yaml
+import argparse
 
-import MNIST
+import MNIST_dataloader
 from MNIST_CNN_model import MNIST_CNN
-from MNIST_cvae_model import Encoder, Decoder
+from MNIST_CVAE_model import Encoder, Decoder
 
 
-def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect=True,
+def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, config, use_causal_effect=True,
                lam_ML=0.000001, ):
     # --- train ---
     for i in range(n_epochs):
@@ -30,6 +32,11 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
 
             print(loss.item())
         print(i)
+
+    torch.save(encoder.state_dict(), str(config['save_dir']) + str(config['model_name']))
+    torch.save(decoder.state_dict(), str(config['save_dir']) + str(config['model_name']))
+
+    return encoder, decoder
 
 
 def VAE_LL_loss(Xbatch, Xest, logvar, mu):
@@ -74,6 +81,13 @@ def load_pretrained_mnist(model, PATH, *args, **kwargs):
 
 if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', default='config/config.yml')
+    args = parser.parse_args()
+
+    config = yaml.load(open(args.config, "r"))
+
     n_beta = 2
     n_alpha = 1
     z_dim = n_alpha + n_beta
@@ -84,11 +98,11 @@ if __name__ == "__main__":
     encoder = Encoder(z_dim, 1, x_dim).to(device)
     decoder = Decoder(z_dim, 1, x_dim).to(device)
 
-    PATH = './pretrained_models_local/mnist_cnn'
+    PATH = './pretrained_models_local/mnist_cnn_new'
 
     classifier = load_pretrained_mnist(MNIST_CNN, PATH, 2).to(device)
 
-    train_dataset, test_dataset = MNIST.get_mnist_dataloaders(batch_size=64, digits_to_include=[3, 8])
+    train_dataset, test_dataset = MNIST_dataloader.get_mnist_dataloaders(batch_size=64, digits_to_include=[3, 8])
     n_epochs = 10
 
     params_use = list(decoder.parameters()) + list(encoder.parameters())
@@ -106,4 +120,5 @@ if __name__ == "__main__":
         "n_beta": n_beta
     }
 
-    train_cvae(encoder, decoder, classifier, train_dataset, n_epochs, optimizer, device, params)
+    encoder, decoder = train_cvae(encoder, decoder, classifier, train_dataset, n_epochs, optimizer, device, params, config)
+
