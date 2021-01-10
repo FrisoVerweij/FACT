@@ -13,4 +13,4 @@ build/
 
 pretrained_models_local/*
 
-config/*
+#config/*
