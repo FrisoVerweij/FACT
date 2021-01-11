@@ -2,6 +2,7 @@
 classifier: "mnist_cnn_overfit"  # choices: mnist_cnn, mnist_cnn_overfit, fmnist_cnn, cifar10_cnn
 vae_model: "mnist_cvae"  # choices: mnist_cvae, fmnist_cvae, cifar10_cvae
 dataset: "mnist_overfit"  # choices: mnist, mnist_overfit, fmnist, cifar10
+
 mnist_digits: [3,8]  # choices: "None", "a,b,c,...,z" note that this basically determines which classes you want to include
 device: "cuda"  # choices: cuda, cpu
 save_dir: "./pretrained_models_local/"
@@ -29,5 +30,4 @@ sampler: "default"
 embed: False
 dropout: False
 freeze: []
-
 
