@@ -17,17 +17,17 @@
 #freeze: []
 
 model: mnist_cnn # only used in select_model function
-dataset: "mnist"
+dataset: "fmnist"
 batch_size: 64
 
 z_dim: 8
 alpha_dim: 1
 c_dim: 1
 img_size: 28 #3136 # 28x28
-mnist_digits: [3, 8]  # np.array([3,8])
+mnist_digits: [3,8]  # np.array([3,8])
 latent_sweep_vals: [-2, 2, 25]  # = np.linspace(-2,2,25)
 latent_sweep_plot: [0, 4, 8, 12, 16, 20, 24] # = [0,4,8,12,16,20,24]
-classifier_file: 'pretrained_models_local/mnist_cnn'
-encoder_file: 'pretrained_models_local/mnist_cvae_encoder'
-decoder_file: 'pretrained_models_local/mnist_cvae_decoder'
+classifier_file: 'pretrained_models_local/fmnist_cnn'
+encoder_file: 'pretrained_models_local/fmnist_cvae_encoder'
+decoder_file: 'pretrained_models_local/fmnist_cvae_decoder'
 

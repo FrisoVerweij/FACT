@@ -1,23 +1,33 @@
-model: mnist_cnn # only used in select_model function
-model_name: mnist_cvae # change this everytime you train a new model
-epochs: 50
-batch_size: 128
-lr: 0.1
-momentum: 0.5
-
+### Basic setup arguments
+classifier: "cifar10_cnn"  # choices: mnist_cnn, fmnist_cnn, cifar10_cnn
+vae_model: "cifar10_cvae"  # choices: mnist_cvae, fmnist_cvae, cifar10_cvae
+dataset: "cifar10"  # choices: mnist, fmnist, cifar10
+mnist_digits: [3,8]  # choices: "None", "a,b,c,...,z" note that this basically determines which classes you want to include
+device: "cuda"  # choices: cuda, cpu
 save_dir: "./pretrained_models_local/"
-optimizer: "SGD" # choices: SGD, Adam
-device: "cuda" # choices: cuda, cpu
-dataset: "mnist"
-#mnist_digits: "3, 8" #choices: list of numbers as str, or None to default to all 10 numbers
-mnist_digits: [3, 8]
 
+### Basic optimization arguments
+epochs: 1
+batch_size: 64
+lr: 0.0005
+momentum: 0.5
+b1: 0.5
+b2: 0.999
+optimizer: "Adam" # choices: SGD, Adam
+
+### CVAE-specific arguments
+image_size: 32  # for mnist and fmnist pick 28, for cifar10 pick 32
+n_alpha: 1
+n_beta: 7
+alpha_samples: 100
+beta_samples: 25
+lam_ml: 0.05
+use_causal: True
+
+### optional not used arguments
 sampler: "default"
 embed: False
 dropout: False
 freeze: []
 
-### CVAE-specific
-image_size: 28
-n_alpha: 4
-n_beta: 4
+
