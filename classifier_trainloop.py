@@ -6,7 +6,7 @@ import torch
 import argparse
 import time
 import MNIST_CNN_model
-
+from utils import *
 
 def train(flags, seed):
     '''
@@ -77,64 +77,12 @@ def train(flags, seed):
     torch.save(model.state_dict(), str(flags.save_dir) + str(flags.model))
     return model
 
-
-def select_dataloader(flags):
-    '''
-    Selects a dataloader given the hyperparameters
-    :param flags: Set of hyperparameters
-    :return: DataLoader
-    '''
-    if flags.dataset == "mnist":
-        # Parse the list of digits to include
-        if flags.mnist_digits == "None":
-            mnist_digits = None
-        else:
-            mnist_digits = flags.mnist_digits.split(',')
-            mnist_digits = [int(digit) for digit in mnist_digits]
-
-        # return dataloader
-        return MNIST.get_mnist_dataloaders(batch_size=flags.batch_size, digits_to_include=mnist_digits)
-    else:
-        raise Exception("No valid dataset selected!")
-
-
-def select_model(flags):
-    '''
-    Selects a model given the hyperparameters
-    :param flags: Set of hyperparameters
-    :return: nn.module
-    '''
-    if flags.model == 'mnist_cnn':
-        if flags.mnist_digits == "None":
-            output_dim = 10
-        else:
-            output_dim = len(flags.mnist_digits.split(','))
-        return MNIST_CNN_model.MNIST_CNN(output_dim)
-    else:
-        raise Exception("No valid model selected!")
-
-
-def select_optimizer(flags, model):
-    '''
-    Selects an optimizer given the hyperparameters
-    :param flags: Set of hyperparameters
-    :param model: model that we want to optimize
-    :return: nn.optim.optimizer
-    '''
-    if flags.optimizer == "SGD":
-        return torch.optim.SGD(model.parameters(), lr=flags.lr, momentum=flags.momentum)
-    elif flags.optimizer == "Adam":
-        return torch.optim.Adam(model.parameters(), lr=flags.lr)
-    else:
-        raise Exception("No valid optimizer selected!")
-
-
 if __name__ == "__main__":
     # Create parser to get hyperparameters from user
     parser = argparse.ArgumentParser()
 
     # Parse hyperparameters
-    parser.add_argument('--model', type=str, default='mnist_cnn', choices=['mnist_cnn'],
+    parser.add_argument('--model', type=str, default='mnist_cnn', choices=['mnist_cnn', 'fmnist_cnn', 'cifar10_cnn'],
                         help='model to train')
     parser.add_argument('--epochs', type=int, default=50,
                         help='number of epochs of training')
@@ -155,7 +103,7 @@ if __name__ == "__main__":
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu',
                         choices=['cuda', 'cpu'],
                         help="device to run the algorithm on")
-    parser.add_argument('--dataset', type=str, default="mnist", choices=["mnist"],
+    parser.add_argument('--dataset', type=str, default="mnist", choices=['mnist', 'fmnist', 'cifar10'],
                         help="dataset to train on")
     parser.add_argument('--mnist_digits', type=str, default="None",
                         help="list of digits to include in the dataset. If nothing is given, all are included. "

@@ -63,7 +63,5 @@ class Decoder(nn.Module):
         t = self.fc(z).view(batch_size, -1,
                             int(np.sqrt(self.x_dim) / 4),
                             int(np.sqrt(self.x_dim) / 4))
-
         x = self.model(t)
-
         return x
