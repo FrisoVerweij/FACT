@@ -5,7 +5,12 @@ Paper reproduction
 - PyTorch
 
 ## How to use
-*classifier_trainloop.py*
+###classifier_trainloop.py###
+####Interface####
+To create and train a classification model, call the *classifier_trainloop.py* file using the commandline using the hyperparameters provided below.
+After training, the model is saved in the folder models/
+
+####Hyperparameters####
 Specify the following parameters when running from commandline:
 - model: default: mnist_cnn, choices: mnist_cnn
 - epochs: default: 50
