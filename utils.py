@@ -101,3 +101,14 @@ def weights_init_normal(m):
     elif classname.find('linear') != -1:
         torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
         torch.nn.init.constant_(m.bias.data, 0.0)
+
+
+def to_classifier_config(config):
+    return  {**config['classifier'], **config['general'],**config['dataset'], }
+
+
+def to_vae_config(config):
+    return {**config['vae'], **config['general'],**config['dataset'], "classifier": config["classifier"]["classifier"]}
+
+def to_visualize_config(config):
+    return {**config['vae'], **config['general'], **config['dataset'], "classifier": config["classifier"]["classifier"]}

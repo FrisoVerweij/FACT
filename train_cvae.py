@@ -6,6 +6,7 @@ from utils import *
 def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect, lam_ML):
     # --- train ---
     for i in range(n_epochs):
+
         for x, y in dataloader:
             inputs = x.to(device)
             targets = y.to(device)
@@ -68,17 +69,15 @@ def joint_uncond(params, decoder, classifier, device):
     info = {"xhat": xhat, "yhat": yhat}
     return negCausalEffect, info
 
-def gen_from_latent(path):
-    a=2
-
 
 if __name__ == "__main__":
     # Parse the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/config.yml')
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
+
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
-
+    config = to_vae_config(config)
     # The device to run the model on
     device = config['device']
 
