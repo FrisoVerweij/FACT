@@ -7,6 +7,7 @@ import argparse
 import time
 import MNIST_CNN_model
 import yaml # pip install pyyaml
+from MNIST_dataloader import select_dataloader
 
 
 def train(config, seed):
@@ -78,25 +79,6 @@ def train(config, seed):
     torch.save(model.state_dict(), str(config['save_dir']) + str(config['model_name']))
     return model
 
-
-def select_dataloader(config):
-    '''
-    Selects a dataloader given the hyperparameters
-    :config: Set of hyperparameters
-    :return: DataLoader
-    '''
-    if config['dataset'] == "mnist":
-        # Parse the list of digits to include
-        if config['mnist_digits'] == "None":
-            mnist_digits = None
-        else:
-            mnist_digits = config['mnist_digits'].split(',')
-            mnist_digits = [int(digit) for digit in mnist_digits]
-
-        # return dataloader
-        return MNIST_dataloader.get_mnist_dataloaders(batch_size=config['batch_size'], digits_to_include=mnist_digits)
-    else:
-        raise Exception("No valid dataset selected!")
 
 
 def select_model(config):
