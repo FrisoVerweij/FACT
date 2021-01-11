@@ -73,8 +73,9 @@ def visualize(config):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/config.yml')
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
+
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
-
+    config = to_visualize_config(config)
     visualize(config)

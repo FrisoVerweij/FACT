@@ -17,7 +17,7 @@ b2: 0.999
 optimizer: "SGD" # choices: SGD, Adam
 
 ### CVAE-specific arguments
-image_size: 28  # for mnist and fmnist pick 28, for cifar10 pick 32
+image_size: 32  # for mnist and fmnist pick 28, for cifar10 pick 32
 n_alpha: 1
 n_beta: 7
 alpha_samples: 100
@@ -30,4 +30,5 @@ sampler: "default"
 embed: False
 dropout: False
 freeze: []
+
 

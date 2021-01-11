@@ -75,12 +75,15 @@ def train(config, seed):
     torch.save(model.state_dict(), str(config['save_dir']) + str(config['classifier']))
     return model
 
+
+
 if __name__ == "__main__":
     # Create parser to get hyperparameters from user
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/config.yml')
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, "r"))
-
+    config = to_classifier_config(config)
+    print(config)
     train(config, 1)
