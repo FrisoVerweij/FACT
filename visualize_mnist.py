@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 from author_code.util import *
 from author_code.load_mnist import *
-from MNIST_dataloader import select_dataloader
+from utils import select_dataloader
 import yaml
 import argparse
 
@@ -53,7 +53,7 @@ x_val = np.reshape(data, (data.shape[0], data.shape[2], data.shape[3], data.shap
 
 
 # --- load VAE ---
-from MNIST_CVAE_model import Decoder, Encoder
+from models_vae import Decoder, Encoder
 
 encoder = Encoder(config['z_dim'], config['c_dim'], config['img_size']**2).to(device)
 decoder = Decoder(config['z_dim'], config['c_dim'], config['img_size']**2).to(device)
@@ -64,7 +64,7 @@ encoder.load_state_dict(torch.load(config['encoder_file'], map_location=device),
 decoder.load_state_dict(torch.load(config['decoder_file'], map_location=device),strict=False)
 
 # --- load classifier ---
-from MNIST_CNN_model import MNIST_CNN as CNN
+from models_classifiers import MNIST_CNN as CNN
 
 classifier = CNN(y_dim).to(device)
 classifier.load_state_dict(torch.load(config['classifier_file'], map_location=device), strict=False)
