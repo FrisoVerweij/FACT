@@ -25,6 +25,7 @@ def train(config, seed):
 
     # Record current time to record training time
     start_time = time.time()
+    train_accuracy = 0
     batch_count = 0
     for epoch in range(config['epochs']):
         batch_count = 0
@@ -35,8 +36,12 @@ def train(config, seed):
             targets = targets.to(device)
 
             # Calculate model output and loss
-            predictions, _ = model(inputs)
+            predictions, prediction_probabilities = model(inputs)
             loss = loss_module(predictions, targets)
+
+            accuracyPredictions = torch.argmax(prediction_probabilities, dim=-1)
+            correct = (accuracyPredictions == targets).sum().item()
+            train_accuracy += correct / len(targets)
 
             # Execute backwards propagation
             model.zero_grad()
@@ -63,8 +68,10 @@ def train(config, seed):
                 total_correct += (predictions == targets).sum().item()
 
             accuracy = total_correct / total_comparisons
-            print("[Test Epoch %d/%d] [corr: %f]" % (epoch, config['epochs'], accuracy))
+            print("[Test Epoch %d/%d] [test accuracy: %f, train accuracy: %f]" % (epoch, config['epochs'], accuracy, train_accuracy/batch_count))
 
+        batch_count = 0
+        train_accuracy = 0
     torch.save(model.state_dict(), str(config['save_dir']) + str(config['classifier']))
     return model
 

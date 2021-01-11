@@ -26,6 +26,9 @@ def select_dataloader(config):
     if config["dataset"] == "mnist":
         return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
 
+    elif config["dataset"] == "mnist_overfit":
+        return dataset.get_mnist_overfit_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
+
     elif config["dataset"] == "fmnist":
         return dataset.get_fmnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
 
@@ -49,6 +52,13 @@ def select_classifier(config):
         else:
             output_dim = len(config["mnist_digits"])
         return models_classifiers.MNIST_CNN(output_dim)
+
+    elif config["classifier"] == 'mnist_cnn_overfit':
+        if config["mnist_digits"] == "None":
+            output_dim = 10
+        else:
+            output_dim = len(config["mnist_digits"])
+        return models_classifiers.MNIST_CNN_Overfit(output_dim)
 
     elif config["classifier"] == 'cifar10_cnn':
         if config["mnist_digits"] == "None":
