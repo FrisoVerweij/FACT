@@ -71,6 +71,7 @@ def select_classifier(config):
         raise Exception("No valid model selected!")
 
 
+
 def select_optimizer(config, model, model_2=None):
     '''
     Selects an optimizer given the hyperparameters
@@ -86,7 +87,7 @@ def select_optimizer(config, model, model_2=None):
     if config["optimizer"] == "SGD":
         return torch.optim.SGD(params, lr=config["lr"], momentum=config["momentum"])
     elif config["optimizer"] == "Adam":
-        return torch.optim.Adam(params, lr=config["lr"], betas=(config["b1"], config["b2"]))
+        return torch.optim.Adam(params, lr=config["lr"], betas=(config["b1"], config["b2"]), weight_decay=config["weight_decay"])
     else:
         raise Exception("No valid optimizer selected!")
 
@@ -98,6 +99,9 @@ def select_vae_model(config, z_dim):
     elif config["vae_model"] == "cifar10_cvae":
         encoder = models_vae.Encoder_cifar10(z_dim, 3, config["image_size"]**2)
         decoder = models_vae.Decoder_cifar10(z_dim, 3, config["image_size"]**2)
+    elif config["vae_model"] == "cifar10_cvae_sasha":
+        encoder = models_vae.Encoder_cifar10_sasha(z_dim, 3, config["image_size"])  # note that here we do not square the image size
+        decoder = models_vae.Decoder_cifar10_sasha(z_dim, 3, config["image_size"])
     else:
         raise Exception("No valid encoder/decoder selected!")
 
@@ -112,6 +116,11 @@ def weights_init_normal(m):
         torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
         torch.nn.init.constant_(m.bias.data, 0.0)
 
+def reconstruction_loss(self, x_reconstructed, x):
+    return nn.BCELoss(size_average=False)(x_reconstructed, x) / x.size(0)
+
+def kl_divergence_loss(self, mean, logvar):
+    return ((mean**2 + logvar.exp() - 1 - logvar) / 2).mean()
 
 def to_classifier_config(config):
     return  {**config['classifier'], **config['general'],**config['dataset'], }

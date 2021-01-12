@@ -7,26 +7,29 @@ dataset:
   mnist_digits: [3,8]
 classifier:
   classifier: "mnist_cnn"
-  epochs: 20
+  model_name: "model1"
+  epochs: 1
   batch_size: 64
   lr: 0.1
   momentum: 0.5
   optimizer: "SGD"
 vae:
   vae_model: "mnist_cvae"
-  use_causal: True
+  model_name: "model1"
+  use_causal: False
   n_alpha: 1
   n_beta: 7
   alpha_samples: 100
   beta_samples: 25
-  lam_ml: 0.05
+  lam_ml: 1
   batch_size: 64
   lr: 0.0005
   b1: 0.5
   b2: 0.999
+  weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 40
+  epochs: 1
 
 
 

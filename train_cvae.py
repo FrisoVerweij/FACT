@@ -1,12 +1,13 @@
 import torch
 import yaml
 from utils import *
-
+import time
 
 def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect, lam_ML):
     # --- train ---
-    for i in range(n_epochs):
-
+    start_time = time.time()
+    for epoch in range(n_epochs):
+        batch_count = 0
         for x, y in dataloader:
             inputs = x.to(device)
             targets = y.to(device)
@@ -25,14 +26,15 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
             loss.backward()
             optimizer.step()
 
+        print("[Train Epoch %d/%d] [Batch %d] time: %4.4f [loss: %f]" % (
+            epoch, config['epochs'], batch_count, time.time() - start_time,
+            loss.item()))
+
         grid = make_grid(x_generated, nrow=int(8), normalize=True, range=(0, 1))
-        save_image(grid, './image0.png')
+        save_image(grid, './example_image.png')
 
-        print(loss.item())
-        print(i)
-
-    torch.save(encoder.state_dict(), str(config['save_dir']) + str(config['vae_model']) + "_encoder")
-    torch.save(decoder.state_dict(), str(config['save_dir']) + str(config['vae_model']) + "_decoder")
+    torch.save(encoder.state_dict(), str(config['save_dir']) + str(config['vae_model']) + "_encoder" + "_" + config['model_name'])
+    torch.save(decoder.state_dict(), str(config['save_dir']) + str(config['vae_model']) + "_decoder" + "_" + config['model_name'])
 
     return encoder, decoder
 
@@ -73,7 +75,7 @@ def joint_uncond(params, decoder, classifier, device):
 if __name__ == "__main__":
     # Parse the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config_local/mnist10.yml')
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
 
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
@@ -91,7 +93,7 @@ if __name__ == "__main__":
 
     # The classifier to use
     classifier = select_classifier(config)
-    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier']))
+    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
     classifier.to(device)
 
     # The dataset is loaded
