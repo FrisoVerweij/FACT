@@ -7,7 +7,7 @@ from torch.utils.data.dataloader import DataLoader
 from torchvision.datasets import MNIST, FashionMNIST, CIFAR10
 from torchvision.transforms import transforms
 
-def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: list = None):
+def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: list = None, size=None):
     '''
     Loads the mnist train and test set into a dataloader
     :param root: dir to save dataset
@@ -32,7 +32,9 @@ def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: 
         test_indices = get_indices(mnist_test_dataset)
         mnist_train_dataset = Subset(mnist_train_dataset, train_indices, )
         mnist_test_dataset = Subset(mnist_test_dataset, test_indices)
-
+    if size != None:
+        mnist_train_dataset = Subset(mnist_train_dataset, range(size), )
+        mnist_test_dataset = Subset(mnist_test_dataset, range(size), )
     train_dataloader = DataLoader(mnist_train_dataset, shuffle=True, batch_size=batch_size, )
     test_dataloader = DataLoader(mnist_test_dataset, shuffle=True, batch_size=batch_size, )
 

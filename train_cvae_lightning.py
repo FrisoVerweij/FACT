@@ -14,11 +14,13 @@ from dataset import get_mnist_dataloaders
 from models_vae import Encoder, Decoder
 from train_cvae import VAE_LL_loss, joint_uncond
 from utils import *
+from visualize import visualize
 
 
 class CVAE(pl.LightningModule):
 
-    def __init__(self, z_dim, channel_dimension, x_dim, classifier, device, params, causal_effect, lam_ML, lr, betas):
+    def __init__(self, z_dim, channel_dimension, x_dim, classifier, device, params, causal_effect, lam_ML, lr, betas,
+                 yval, xval, image_size):
         """
         PyTorch Lightning module that summarizes all components to train a VAE.
         Inputs:
@@ -39,6 +41,11 @@ class CVAE(pl.LightningModule):
         self.params = params
         self.use_causal_effect = causal_effect
         self.lam_ML = lam_ML
+
+        #### We make sure we have standard data to generate the prictures from
+        self.y_val = yval
+        self.x_val = xval
+        self.image_size = image_size
 
     def forward(self, imgs):
         """
@@ -64,9 +71,10 @@ class CVAE(pl.LightningModule):
         return loss, causalEffect, nll
 
     @torch.no_grad()
-    def sample(self, batch_size):
-        latent_variables = torch.normal(torch.zeros((batch_size, self.encoder.z_dim)), 1).to(self.decoder.device)
-        x_samples = torch.sigmoid(self.decoder(latent_variables))
+    def sample(self):
+        latentsweep_vals = [-3., -2., -1., 0., 1., 2., 3.]
+        x_samples = visualize(self.y_val, self.z_dim, self.x_val, self.device, self.encoder, self.decoder,
+                              self.classifier, latentsweep_vals, self.image_size)
 
         return x_samples
 
@@ -97,7 +105,56 @@ class CVAE(pl.LightningModule):
         self.log("test_bpd", bpd)
 
 
-def train_cvae(args, z_dim, channel_dimension, x_dim, classifier, device, params, causal_effect, lam_ML, lr, betas):
+class GenerateCallback(pl.Callback):
+
+    def __init__(self, batch_size=8, every_n_epochs=5, save_to_disk=False):
+        """
+        Inputs:
+            batch_size - Number of images to generate
+            every_n_epochs - Only save those images every N epochs (otherwise tensorboard gets quite large)
+            save_to_disk - If True, the samples and image means should be saved to disk as well.
+        """
+        super().__init__()
+        self.batch_size = batch_size
+        self.every_n_epochs = every_n_epochs
+        self.save_to_disk = save_to_disk
+
+    def on_epoch_end(self, trainer, pl_module):
+        """
+        This function is called after every epoch.
+        Call the save_and_sample function every N epochs.
+        """
+        if (trainer.current_epoch + 1) % self.every_n_epochs == 0:
+            self.sample_and_save(trainer, pl_module, trainer.current_epoch + 1)
+
+    def sample_and_save(self, trainer, pl_module, epoch):
+        """
+        Function that generates and save samples from the VAE.
+        The generated samples and mean images should be added to TensorBoard and,
+        if self.save_to_disk is True, saved inside the logging directory.
+        Inputs:
+            trainer - The PyTorch Lightning "Trainer" object.
+            pl_module - The VAE model that is currently being trained.
+            epoch - The epoch number to use for TensorBoard logging and saving of the files.
+        """
+        # Hints:
+        # - You can access the logging directory path via trainer.logger.log_dir, and
+        # - You can access the tensorboard logger via trainer.logger.experiment
+        # - Use the torchvision function "make_grid" to create a grid of multiple images
+        # - Use the torchvision function "save_image" to save an image grid to disk
+
+        samples = pl_module.sample()
+        for i, sample in enumerate(samples):
+            name = 'samples_{}_{}'.format(epoch, i)
+            logger = trainer.logger.experiment
+            logger.add_image('sample_{}'.format(i), sample, epoch)
+
+            if self.save_to_disk:
+                save_image(sample, trainer.logger.log_dir + '\\' + name + "_sample.png")
+
+
+def train_cvae(args, z_dim, channel_dimension, x_dim, classifier, device, params, causal_effect, lam_ML, lr, betas,
+               image_size):
     """
     Function for training and testing a VAE model.
     Inputs:
@@ -105,22 +162,28 @@ def train_cvae(args, z_dim, channel_dimension, x_dim, classifier, device, params
     """
 
     os.makedirs(args.log_dir, exist_ok=True)
-    train_loader, val_loader = get_mnist_dataloaders(digits_to_include=[3, 8])
+    train_loader, val_loader = get_mnist_dataloaders(digits_to_include=[3, 8], size=10)
+
+    ### Get the pictures
+    data, targets = next(iter(val_loader))
+    y_val = targets.numpy()
+    x_val = np.reshape(data, (data.shape[0], data.shape[2], data.shape[3], data.shape[1]))
 
     # Create a PyTorch Lightning trainer with the generation callback
-
+    gen_callback = GenerateCallback(every_n_epochs=1, save_to_disk=True)
     trainer = pl.Trainer(default_root_dir=args.log_dir,
                          checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
                          gpus=1 if torch.cuda.is_available() else 0,
                          max_epochs=args.epochs,
                          log_every_n_steps=1,
-                         # callbacks=[gen_callback],
+                         callbacks=[gen_callback],
                          progress_bar_refresh_rate=1 if args.progress_bar else 0)
     trainer.logger._default_hp_metric = None  # Optional logging argument that we don't need
 
     # Create model
     pl.seed_everything(args.seed)  # To be reproducible
-    model = CVAE(z_dim, channel_dimension, x_dim, classifier, device, params, causal_effect, lam_ML, lr, betas)
+    model = CVAE(z_dim, channel_dimension, x_dim, classifier, device, params, causal_effect, lam_ML, lr, betas, y_val,
+                 x_val, image_size)
 
     # Training
     # gen_callback.sample_and_save(trainer, model, epoch=0)  # Initial sample
@@ -148,7 +211,7 @@ if __name__ == "__main__":
                         help='Max number of epochs')
     parser.add_argument('--seed', default=42, type=int,
                         help='Seed to use for reproducing results')
-    parser.add_argument('--num_workers', default=4, type=int,
+    parser.add_argument('--num_workers', default=0, type=int,
                         help='Number of workers to use in the data loaders. To have a truly deterministic run, this has to be 0. ' + \
                              'For your assignment report, you can use multiple workers (e.g. 4) and do not have to set it to 0.')
     parser.add_argument('--log_dir', default='CVAE_logs', type=str,
@@ -164,6 +227,7 @@ if __name__ == "__main__":
     device = config['device']
     z_dim = config['n_alpha'] + config['n_beta']
     x_dim = config['image_size'] ** 2
+    image_size = config['image_size']
     classifier = select_classifier(config)
     classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier']))
     classifier.to(device)
@@ -184,4 +248,4 @@ if __name__ == "__main__":
 
     channel_dimension = 1
     train_cvae(args, z_dim, channel_dimension, x_dim, classifier, device, params, config['use_causal'],
-               config['lam_ml'], config['lr'], (config['b1'],config['b2']))
+               config['lam_ml'], config['lr'], (config['b1'], config['b2']), image_size)
