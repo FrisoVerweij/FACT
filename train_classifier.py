@@ -26,7 +26,6 @@ def train(config, seed):
     # Record current time to record training time
     start_time = time.time()
     train_accuracy = 0
-    batch_count = 0
     for epoch in range(config['epochs']):
         batch_count = 0
         model.train()
@@ -70,9 +69,8 @@ def train(config, seed):
             accuracy = total_correct / total_comparisons
             print("[Test Epoch %d/%d] [test accuracy: %f, train accuracy: %f]" % (epoch, config['epochs'], accuracy, train_accuracy/batch_count))
 
-        batch_count = 0
         train_accuracy = 0
-    torch.save(model.state_dict(), str(config['save_dir']) + str(config['classifier']))
+    torch.save(model.state_dict(), config['save_dir'] + config['classifier'] + "_" + config['model_name'])
     return model
 
 
