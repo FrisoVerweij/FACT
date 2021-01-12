@@ -73,7 +73,7 @@ def joint_uncond(params, decoder, classifier, device):
 if __name__ == "__main__":
     # Parse the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8.yml')
+    parser.add_argument('--config', default='config_local/mnist10.yml')
 
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
@@ -101,8 +101,12 @@ if __name__ == "__main__":
     optimizer = select_optimizer(config, encoder, decoder)
 
     # Additional parameters that are mainly used for the cuasal term of the loss
+    if config['mnist_digits'] == None:
+        n_classes = 10
+    else:
+        n_classes = len(config['mnist_digits'])
     params = {
-        "number_of_classes": 2,
+        "number_of_classes": n_classes,
         "alpha_samples": config['alpha_samples'],
         "beta_samples": config['beta_samples'],
         "z_dim": z_dim,
