@@ -47,7 +47,7 @@ def select_classifier(config):
     '''
 
     if config["classifier"] in ['mnist_cnn', 'fmnist_cnn']:
-        if config["mnist_digits"] == "None":
+        if config["mnist_digits"] == None:
             output_dim = 10
         else:
             output_dim = len(config["mnist_digits"])

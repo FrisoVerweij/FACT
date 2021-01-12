@@ -4,7 +4,7 @@ general:
   device: "cuda"
 dataset:
   dataset: "mnist"
-  mnist_digits: [3,8]
+  mnist_digits: [3,8] # if you want 10 classes, leave this empty as mnist_digits:
 classifier:
   classifier: "mnist_cnn"
   epochs: 20
