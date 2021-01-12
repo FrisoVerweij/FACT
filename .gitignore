@@ -13,5 +13,5 @@ build/
 
 pretrained_models_local/*
 
-config/*
+
 figures/*
