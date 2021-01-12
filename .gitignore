@@ -13,5 +13,6 @@ build/
 
 pretrained_models_local/*
 
+CVAE_logs
 config_local/*
 figures/*
