@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+
 class Encoder(nn.Module):
 
     def __init__(self, z_dim, channel_dimension, x_dim,

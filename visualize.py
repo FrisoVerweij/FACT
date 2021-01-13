@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 import yaml
 from matplotlib import image
-
+import numpy as np
 from utils import *
 
 
