@@ -101,7 +101,7 @@ class GenerateCallbackLatent(pl.Callback):
             for samples in results:
                 latent_dim_samples += samples[start_index: end_index]
 
-            grid = make_grid(latent_dim_samples, nrow=7, padding=5)
+            grid = make_grid(latent_dim_samples, nrow=7)
             name = 'latent_samples_{}_{}'.format(i, epoch)
             logger = trainer.logger.experiment
             logger.add_image('latent_sample_{}'.format(i), grid, epoch)

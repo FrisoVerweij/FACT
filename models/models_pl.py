@@ -7,8 +7,7 @@ from utils import *
 
 class CVAE(pl.LightningModule):
 
-    def __init__(self, z_dim, channel_dimension, x_dim, classifier, device, params, causal_effect, lam_ML, lr, betas,
-                 image_size):
+    def __init__(self, z_dim, channel_dimension, x_dim, classifier, params, device="cpu"):
         """
         PyTorch Lightning module that summarizes all components to train a VAE.
         Inputs:
@@ -19,6 +18,8 @@ class CVAE(pl.LightningModule):
             lr - Learning rate to use for the optimizer
         """
         super().__init__()
+        self.lr = params['lr']
+        self.betas = (params['b1'], params['b2'])
         self.save_hyperparameters()
         self.z_dim = z_dim
         self.encoder = Encoder(z_dim, channel_dimension, x_dim).to(device)
@@ -27,10 +28,10 @@ class CVAE(pl.LightningModule):
         self.classifier = classifier
 
         self.params = params
-        self.use_causal_effect = causal_effect
-        self.lam_ML = lam_ML
+        self.use_causal = params["use_causal"]
+        self.lam_ML = params["lam_ml"]
 
-        self.image_size = image_size
+        self.image_size = params["image_size"]
 
     def forward(self, imgs):
         """
@@ -51,7 +52,7 @@ class CVAE(pl.LightningModule):
 
         causalEffect, ceDebug = joint_uncond(self.params, self.decoder, self.classifier, self.device)
 
-        loss = self.use_causal_effect * causalEffect + self.lam_ML * nll
+        loss = self.use_causal * causalEffect + self.lam_ML * nll
 
         return loss, causalEffect, nll
 
@@ -76,7 +77,7 @@ class CVAE(pl.LightningModule):
 
     def configure_optimizers(self):
         # Create optimizer
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.lr, betas=self.hparams.betas)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, betas=self.betas)
         return optimizer
 
     def training_step(self, batch, batch_idx):

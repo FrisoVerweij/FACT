@@ -2,13 +2,17 @@
 general:
   save_dir: "./pretrained_models_local/."
   device: "cuda"
+  seed: 42
+  num_workers: 0
+  log_dir: "CVAE_logs"
+  progress_bar: True
 dataset:
   dataset: "mnist"
   mnist_digits: [3,8]
 classifier:
   classifier: "mnist_cnn"
   model_name: "model1"
-  epochs: 1
+  epochs: 20
   batch_size: 64
   lr: 0.1
   momentum: 0.5
@@ -29,7 +33,7 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 1
+  epochs: 20
 
 
 
