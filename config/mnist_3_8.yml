@@ -16,7 +16,7 @@ classifier:
 vae:
   vae_model: "mnist_cvae"
   model_name: "model1"
-  use_causal: False
+  use_causal: True
   n_alpha: 1
   n_beta: 7
   alpha_samples: 100
