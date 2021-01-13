@@ -73,10 +73,24 @@ class CVAE(pl.LightningModule):
     @torch.no_grad()
     def sample(self):
         latentsweep_vals = [-3., -2., -1., 0., 1., 2., 3.]
-        x_samples = visualize(self.y_val, self.z_dim, self.x_val, self.device, self.encoder, self.decoder,
-                              self.classifier, latentsweep_vals, self.image_size)
+        samples = []
+        x_val = self.x_val
+        x_val = x_val.to(self.device)
 
-        return x_samples
+        z, mu, logvar = self.encoder(x_val)
+        z = z.detach().cpu().numpy()
+        z = z[0]
+        for latent_dim in range(z_dim):
+            for latent_val in latentsweep_vals:
+                z_new = z.copy()
+                z_new[latent_dim] += latent_val
+                x_generated = self.decoder(torch.unsqueeze(torch.from_numpy(z_new), 0).to(self.device))
+
+                samples.append(x_generated.squeeze(0))
+        print(len(samples))
+        return samples
+
+
 
     def configure_optimizers(self):
         # Create optimizer
@@ -144,13 +158,13 @@ class GenerateCallback(pl.Callback):
         # - Use the torchvision function "save_image" to save an image grid to disk
 
         samples = pl_module.sample()
-        for i, sample in enumerate(samples):
-            name = 'samples_{}_{}'.format(epoch, i)
-            logger = trainer.logger.experiment
-            logger.add_image('sample_{}'.format(i), sample, epoch)
+        grid = make_grid(samples, nrow=7 )
+        name = 'samples_{}'.format(epoch)
+        logger = trainer.logger.experiment
+        logger.add_image('sample', grid, epoch)
 
-            if self.save_to_disk:
-                save_image(sample, trainer.logger.log_dir + '\\' + name + "_sample.png")
+        if self.save_to_disk:
+            save_image(grid, trainer.logger.log_dir + '\\' + name + "_sample.png")
 
 
 def train_cvae(args, z_dim, channel_dimension, x_dim, classifier, device, params, causal_effect, lam_ML, lr, betas,
@@ -162,12 +176,12 @@ def train_cvae(args, z_dim, channel_dimension, x_dim, classifier, device, params
     """
 
     os.makedirs(args.log_dir, exist_ok=True)
-    train_loader, val_loader = get_mnist_dataloaders(digits_to_include=[3, 8], size=10)
+    train_loader, val_loader = get_mnist_dataloaders(digits_to_include=[3, 8], )
 
     ### Get the pictures
     data, targets = next(iter(val_loader))
     y_val = targets.numpy()
-    x_val = np.reshape(data, (data.shape[0], data.shape[2], data.shape[3], data.shape[1]))
+    x_val = data
 
     # Create a PyTorch Lightning trainer with the generation callback
     gen_callback = GenerateCallback(every_n_epochs=1, save_to_disk=True)
