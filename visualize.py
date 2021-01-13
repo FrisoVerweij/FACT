@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 import yaml
 from matplotlib import image
-
+import numpy as np
 from utils import *
 
 
@@ -71,6 +71,19 @@ def generate_samples(z_dim, nsamples, latentsweep_vals, x_val, sample_ind, devic
     return Xhats, yhats
 
 
+def generate_sample(encoder, decoder, z_dim, latentsweep_vals, x_val):
+    samples = []
+    x_val = x_val.to(encoder.device)
+    z = encoder(x_val).detach().cpu().numpy()
+    for latent_dim in range(z_dim):
+        for latent_val in latentsweep_vals:
+            z_new = z.copy()
+            z_new[latent_dim] += latent_val
+            x_generated = decoder(torch.unsqueeze(torch.from_numpy(z_new), 0).to(decoder.device))
+            samples.append(samples)
+    return samples
+
+
 def create_figures(z_dim, nsamples, latentsweep_vals, Xhats, Yhats, cols, border_size, image_size):
     imgs = []
     for latent_dim in range(z_dim):
@@ -95,7 +108,6 @@ def create_figures(z_dim, nsamples, latentsweep_vals, Xhats, Yhats, cols, border
         plt.savefig(name, bbox_inches=0)
         img = image.imread(name)
         imgs.append(img)
-
     return imgs
 
 

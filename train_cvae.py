@@ -2,8 +2,11 @@ import torch
 import yaml
 from utils import *
 import time
+import numpy as np
 
-def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect, lam_ML):
+
+def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect,
+               lam_ML):
     # --- train ---
     start_time = time.time()
     for epoch in range(n_epochs):
@@ -24,8 +27,8 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
             loss = use_causal_effect * causalEffect + lam_ML * nll
 
             # this is for CIFAR10, just ignore it
-            #loss = kl_divergence_loss(mu, logvar) + reconstruction_loss(x_generated, inputs)
-            #loss = nll
+            # loss = kl_divergence_loss(mu, logvar) + reconstruction_loss(x_generated, inputs)
+            # loss = nll
 
             loss.backward()
             optimizer.step()
@@ -37,10 +40,13 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
         grid = make_grid(x_generated, nrow=int(8), normalize=True, range=(0, 1))
         save_image(grid, './example_image.png')
 
-    torch.save(encoder.state_dict(), str(config['save_dir']) + str(config['vae_model']) + "_encoder" + "_" + config['model_name'])
-    torch.save(decoder.state_dict(), str(config['save_dir']) + str(config['vae_model']) + "_decoder" + "_" + config['model_name'])
+    torch.save(encoder.state_dict(),
+               str(config['save_dir']) + str(config['vae_model']) + "_encoder" + "_" + config['model_name'])
+    torch.save(decoder.state_dict(),
+               str(config['save_dir']) + str(config['vae_model']) + "_decoder" + "_" + config['model_name'])
 
     return encoder, decoder
+
 
 def VAE_LL_loss(Xbatch, Xest, logvar, mu):
     batch_size = Xbatch.shape[0]
@@ -50,11 +56,12 @@ def VAE_LL_loss(Xbatch, Xest, logvar, mu):
     auto_loss = mse + KLD
     return auto_loss, mse, KLD
 
+
 def joint_uncond(params, decoder, classifier, device):
     eps = 1e-8
     I = 0.0
     q = torch.zeros(params['number_of_classes']).to(device)
-    zs = np.zeros((params['alpha_samples'] + params['beta_samples'], params['z_dim']))  ### placeholder for the samples
+
     for i in range(0, params['alpha_samples']):
         alpha = np.random.randn(params['n_alpha'])
         zs = np.zeros((params['beta_samples'], params['z_dim']))
@@ -217,6 +224,7 @@ if __name__ == "__main__":
 
     # Parse the arguments
     parser = argparse.ArgumentParser()
+
     #parser.add_argument('--config', default='config/mnist_3_8.yml')
     #parser.add_argument('--config', default='config/cifar10_sasha.yml')
     parser.add_argument('--config', default='config/mnist_3_8_algorithm.yml')
@@ -260,14 +268,10 @@ if __name__ == "__main__":
         "n_beta": config['n_beta']
     }
 
-    print(config)
-
     if not config['find_params']:
         encoder, decoder = train_cvae(encoder, decoder, classifier, train_dataset, config['epochs'], optimizer,
                                      device, params, config['use_causal'], config['lam_ml'])
     else:
         algorithm1(classifier, train_dataset, test_dataset, config['epochs'], device, params, config['use_causal'], config)
-
-
 
 

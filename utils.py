@@ -1,14 +1,8 @@
 import dataset
-import numpy as np
 import torch.nn as nn
-from torch.optim.lr_scheduler import StepLR
 import torch
-import argparse
-import time
-import models_classifiers
-import models_vae
+from models import models_classifiers, models_vae
 
-from torchvision.utils import make_grid, save_image
 
 def select_dataloader(config):
     '''
@@ -97,8 +91,8 @@ def select_vae_model(config, z_dim):
         encoder = models_vae.Encoder(z_dim, 1, config["image_size"] ** 2)
         decoder = models_vae.Decoder(z_dim, 1, config["image_size"] ** 2)
     elif config["vae_model"] == "cifar10_cvae":
-        encoder = models_vae.Encoder_cifar10(z_dim, 3, config["image_size"]**2)
-        decoder = models_vae.Decoder_cifar10(z_dim, 3, config["image_size"]**2)
+        encoder = models_vae.Encoder_cifar10(z_dim, 3, config["image_size"] ** 2)
+        decoder = models_vae.Decoder_cifar10(z_dim, 3, config["image_size"] ** 2)
     elif config["vae_model"] == "cifar10_cvae_sasha":
         encoder = models_vae.Encoder_cifar10_sasha(z_dim, 3, config["image_size"])  # note that here we do not square the image size
         decoder = models_vae.Decoder_cifar10_sasha(z_dim, 3, config["image_size"])
