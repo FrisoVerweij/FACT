@@ -2,7 +2,6 @@ import torch
 import yaml
 from utils import *
 import time
-import sys
 
 def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect, lam_ML):
     # --- train ---
@@ -262,6 +261,7 @@ if __name__ == "__main__":
     }
 
     print(config)
+
     if not config['find_params']:
         encoder, decoder = train_cvae(encoder, decoder, classifier, train_dataset, config['epochs'], optimizer,
                                      device, params, config['use_causal'], config['lam_ml'])
