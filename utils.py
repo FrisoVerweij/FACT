@@ -18,7 +18,7 @@ def select_dataloader(config):
     '''
 
     # Parse the list of digits to include
-    if config["mnist_digits"] == None:
+    if config["mnist_digits"] is None:
         mnist_digits = None
     else:
         mnist_digits = config["mnist_digits"]
@@ -47,21 +47,21 @@ def select_classifier(config):
     '''
 
     if config["classifier"] in ['mnist_cnn', 'fmnist_cnn']:
-        if config["mnist_digits"] == None:
+        if config["mnist_digits"] is None:
             output_dim = 10
         else:
             output_dim = len(config["mnist_digits"])
         return models_classifiers.MNIST_CNN(output_dim)
 
     elif config["classifier"] == 'mnist_cnn_overfit':
-        if config["mnist_digits"] == "None":
+        if config["mnist_digits"] is None:
             output_dim = 10
         else:
             output_dim = len(config["mnist_digits"])
         return models_classifiers.MNIST_CNN_Overfit(output_dim)
 
     elif config["classifier"] == 'cifar10_cnn':
-        if config["mnist_digits"] == "None":
+        if config["mnist_digits"] is None:
             output_dim = 10
         else:
             output_dim = len(config["mnist_digits"])
@@ -116,15 +116,16 @@ def weights_init_normal(m):
         torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
         torch.nn.init.constant_(m.bias.data, 0.0)
 
-def reconstruction_loss(self, x_reconstructed, x):
-    return nn.BCELoss(size_average=False)(x_reconstructed, x) / x.size(0)
+def reconstruction_loss(x_reconstructed, x):
+    return nn.BCELoss(reduction='sum')(x_reconstructed, x) / x.size(0)
 
-def kl_divergence_loss(self, mean, logvar):
+def kl_divergence_loss(mean, logvar):
     return ((mean**2 + logvar.exp() - 1 - logvar) / 2).mean()
+
+
 
 def to_classifier_config(config):
     return  {**config['classifier'], **config['general'],**config['dataset'], }
-
 
 def to_vae_config(config):
     return {**config['vae'], **config['general'],**config['dataset'], "classifier": config["classifier"]["classifier"]}

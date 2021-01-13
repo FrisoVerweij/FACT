@@ -23,6 +23,10 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
 
             loss = use_causal_effect * causalEffect + lam_ML * nll
 
+            # this is for CIFAR10, just ignore it
+            #loss = kl_divergence_loss(mu, logvar) + reconstruction_loss(x_generated, inputs)
+            #loss = nll
+
             loss.backward()
             optimizer.step()
 
@@ -73,13 +77,19 @@ def joint_uncond(params, decoder, classifier, device):
 
 
 if __name__ == "__main__":
+    # Set seeds to make test reproducible
+    torch.manual_seed(0)
+    np.random.seed(0)
+
     # Parse the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8.yml')
+    #parser.add_argument('--config', default='config/mnist_3_8.yml')
+    parser.add_argument('--config', default='config/cifar10_sasha.yml')
 
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
     config = to_vae_config(config)
+
     # The device to run the model on
     device = config['device']
 
@@ -117,6 +127,6 @@ if __name__ == "__main__":
     }
 
     encoder, decoder = train_cvae(encoder, decoder, classifier, train_dataset, config['epochs'], optimizer,
-                                  device, params, config['use_causal'], config['lam_ml'])
+                                 device, params, config['use_causal'], config['lam_ml'])
 
 
