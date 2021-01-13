@@ -240,10 +240,9 @@ class Decoder_cifar10_sasha(nn.Module):
         return x_reconstructed
 
     def sample(self, size):
-        z = Variable(
-            torch.randn(size, self.z_size).cuda() if self._is_on_cuda() else
+        z = torch.Tensor(
             torch.randn(size, self.z_size)
-        )
+        ).to('cuda')
         z_projected = self.project(z).view(
             -1, self.kernel_num,
             self.feature_size,

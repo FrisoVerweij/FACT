@@ -17,7 +17,7 @@ def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: 
     '''
     transform = transforms.Compose([transforms.ToTensor()])
 
-    if digits_to_include == None:
+    if digits_to_include is None:
         mnist_train_dataset = MNIST(root=root, download=True, train=True, transform=transform)
         mnist_test_dataset = MNIST(root=root, download=True, train=False, transform=transform)
 
@@ -51,7 +51,7 @@ def get_mnist_overfit_dataloaders(root='./datasets/', batch_size=64, digits_to_i
     '''
     transform = transforms.Compose([transforms.ToTensor()])
 
-    if digits_to_include == None:
+    if digits_to_include is None:
         mnist_train_dataset = MNIST(root=root, download=True, train=True, transform=transform)
         mnist_test_dataset = MNIST(root=root, download=True, train=False, transform=transform)
 
@@ -86,7 +86,7 @@ def get_fmnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include:
     '''
     transform = transforms.Compose([transforms.ToTensor()])
 
-    if digits_to_include == None:
+    if digits_to_include is None:
         fmnist_train_dataset = FashionMNIST(root=root, download=True, train=True, transform=transform)
         fmnist_test_dataset = FashionMNIST(root=root, download=True, train=False, transform=transform)
 
@@ -117,7 +117,7 @@ def get_cifar10_dataloaders(root='./datasets/', batch_size=64, digits_to_include
     '''
     transform = transforms.Compose([transforms.ToTensor()])
 
-    if digits_to_include == None:
+    if digits_to_include is None:
         train_dataset = CIFAR10(root=root, download=True, train=True, transform=transform)
         test_dataset = CIFAR10(root=root, download=True, train=False, transform=transform)
 
