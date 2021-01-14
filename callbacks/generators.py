@@ -145,6 +145,12 @@ COLORLIST = [
     torch.tensor([0., 1., 0.]),
     torch.tensor([0., 0., 1.]),
     torch.tensor([0.8, 0.8, 0.]),
+    torch.tensor([ 0.8, 0., 0.8,]),
+    torch.tensor([ 0, 0.8, 0.8,]),
+    torch.tensor([ 0.5, 0.1, 0.2,]),
+    torch.tensor([ 0.1, 0.5, 0.2,]),
+    torch.tensor([ 0.1, 0.2, 0.5,]),
+    torch.tensor([ 0.2, 0.5, 0.1,]),
 ]
 
 
