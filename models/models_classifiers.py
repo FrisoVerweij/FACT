@@ -2,6 +2,21 @@ import torch.nn as nn
 import torch
 
 
+class BiggestDummy(nn.Module):
+    def __init__(self, input_dim):
+        super(BiggestDummy, self).__init__()
+        self.batch_out = torch.zeroes
+
+    def forward(self, x):
+        # WIP
+        # indices = x[:, :, 0, 0]
+        #
+        #     return torch.tensor([1, 0])
+        # else:
+        #     return torch.tensor([0, 1])
+        return None
+
+
 class MNIST_CNN(nn.Module):
 
     def __init__(self, output_dim):
