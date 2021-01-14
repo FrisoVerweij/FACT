@@ -61,7 +61,7 @@ def joint_uncond(params, decoder, classifier, device):
     eps = 1e-8
     I = 0.0
     q = torch.zeros(params['number_of_classes']).to(device)
-
+    classifier.eval()
     for i in range(0, params['alpha_samples']):
         alpha = np.random.randn(params['n_alpha'])
         zs = np.zeros((params['beta_samples'], params['z_dim']))
@@ -72,8 +72,8 @@ def joint_uncond(params, decoder, classifier, device):
 
         # decode and classify batch of Nbeta samples with same alpha
         xhat = decoder(torch.from_numpy(zs).float().to(device))
-        with torch.no_grad():
-            yhat = classifier(xhat)[1]
+
+        yhat = classifier(xhat)[1]
         p = 1. / float(params['beta_samples']) * torch.sum(yhat, 0)  # estimate of p(y|alpha)
         I = I + 1. / float(params['alpha_samples']) * torch.sum(torch.mul(p, torch.log(p + eps)))
         q = q + 1. / float(params['alpha_samples']) * p  # accumulate estimate of p(y)

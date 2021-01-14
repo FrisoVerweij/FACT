@@ -81,7 +81,7 @@ class CVAE(pl.LightningModule):
 
     def configure_optimizers(self):
         # Create optimizer
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, betas=self.betas)
+        optimizer = torch.optim.Adam(list(self.encoder.parameters()) + list(self.decoder.parameters()), lr=self.lr, betas=self.betas)
         return optimizer
 
     def training_step(self, batch, batch_idx):
