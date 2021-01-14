@@ -13,17 +13,23 @@ from models.models_pl import CVAE
 from utils import *
 
 
-
 def train_cvae_pl(config):
     """
     Function for training and testing a VAE model.
     Inputs:
-        args - Namespace object from the argument parser
+       config:
+
     """
+    config = prepare_variables_pl(config)
+
     pl.seed_everything(config["seed"])  # To be reproducible
 
     os.makedirs(config['log_dir'], exist_ok=True)
     train_loader, val_loader = get_mnist_dataloaders(digits_to_include=config['mnist_digits'])
+
+    classifier = select_classifier(config)
+    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier']))
+    classifier.to(config['device'])
 
     ### Get the pictures
     data, targets = next(iter(val_loader))
@@ -45,29 +51,22 @@ def train_cvae_pl(config):
 
     # Create model
 
-    model = CVAE(z_dim, config['channel_dimension'], x_dim, classifier, config, device=device)
+    model = CVAE(config["z_dim"], config['channel_dimension'], config["x_dim"], classifier, config,
+                 device=config["device"])
 
     # Training
     # gen_callback.sample_and_save(trainer, model, epoch=0)  # Initial sample
     trainer.fit(model, train_loader, val_loader)
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8.yml')
+    #### Calculate and return metric
 
 
-    args = parser.parse_args()
-    config = yaml.load(open(args.config, "r"))
-    config = to_vae_config(config)
+def prepare_variables_pl(config):
     # The device to run the model on
     device = config['device']
     z_dim = config['n_alpha'] + config['n_beta']
     x_dim = config['image_size'] ** 2
     image_size = config['image_size']
-    classifier = select_classifier(config)
-    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier']))
-    classifier.to(device)
 
     if config['mnist_digits'] == None:
         n_classes = 10
@@ -82,8 +81,19 @@ if __name__ == "__main__":
         "n_alpha": config['n_alpha'],
         "n_beta": config['n_beta'],
         "channel_dimension": 1,
+        "x_dim": x_dim
     }
 
     config = {**config, **params}
+    return config
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
+
+    args = parser.parse_args()
+    config = yaml.load(open(args.config, "r"))
+    config = to_vae_config(config)
 
     train_cvae_pl(config)

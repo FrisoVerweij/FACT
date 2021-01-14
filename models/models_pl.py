@@ -60,7 +60,7 @@ class CVAE(pl.LightningModule):
     def sample(self, x_val):
         latentsweep_vals = [-3., -2., -1., 0., 1., 2., 3.]
         samples = []
-
+        labels = []
         x_val = x_val.to(self.device)
 
         z, mu, logvar = self.encoder(x_val)
@@ -71,9 +71,13 @@ class CVAE(pl.LightningModule):
                 z_new = z.copy()
                 z_new[latent_dim] += latent_val
                 x_generated = self.decoder(torch.unsqueeze(torch.from_numpy(z_new), 0).to(self.device))
+                y, y_probs = self.classifier(x_generated)
+                print(y_probs)
+                y = torch.argmax(y_probs, dim=1)
 
+                labels.append(y)
                 samples.append(x_generated.squeeze(0))
-        return samples
+        return samples, labels
 
     def configure_optimizers(self):
         # Create optimizer
