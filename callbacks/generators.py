@@ -8,7 +8,7 @@ class GenerateCallbackDigit(pl.Callback):
     Creates a plot based around a digit
     '''
 
-    def __init__(self, to_sample_from, n_samples=5, every_n_epochs=5, save_to_disk=False, ):
+    def __init__(self, to_sample_from, n_samples=5, every_n_epochs=5, save_to_disk=False, border_size=5):
         """
         Inputs:
             batch_size - Number of images to generate
@@ -20,6 +20,8 @@ class GenerateCallbackDigit(pl.Callback):
         self.to_sample_from = to_sample_from
         self.n_samples = n_samples
         self.save_to_disk = save_to_disk
+
+        self.border_size = border_size
 
     def on_epoch_end(self, trainer, pl_module):
         """
@@ -42,7 +44,7 @@ class GenerateCallbackDigit(pl.Callback):
         for i in range(self.n_samples):
             samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
 
-            samples = add_border_to_samples(samples, y)
+            samples = add_border_to_samples(samples, y, border_size=self.border_size)
 
             grid = make_grid(samples, nrow=7)
             name = 'samples_{}_{}'.format(i, epoch)
@@ -58,7 +60,8 @@ class GenerateCallbackLatent(pl.Callback):
     Creates a plot based around the latent space.
     '''
 
-    def __init__(self, to_sample_from, n_samples=8, latent_dimensions=8, every_n_epochs=5, save_to_disk=False, ):
+    def __init__(self, to_sample_from, n_samples=8, latent_dimensions=8, every_n_epochs=5, save_to_disk=False,
+                 border_size=5):
         """
         Inputs:
             batch_size - Number of images to generate
@@ -71,6 +74,7 @@ class GenerateCallbackLatent(pl.Callback):
         self.n_samples = n_samples
         self.latent_dimensions = latent_dimensions
         self.save_to_disk = save_to_disk
+        self.border_size = border_size
 
     def on_epoch_end(self, trainer, pl_module):
         """
@@ -93,7 +97,7 @@ class GenerateCallbackLatent(pl.Callback):
         results = []
         for i in range(self.n_samples):
             samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
-            samples = add_border_to_samples(samples, y)
+            samples = add_border_to_samples(samples, y, border_size=self.border_size)
             results.append(samples)
 
         ### Loop over the latent dimensions
@@ -125,15 +129,7 @@ def add_border_to_samples(samples, labels, to_rgb=True, border_size=5):
     result = []
     for sample, label in zip(samples, labels):
         ### Create the border tensor
-        border_tensor = torch.zeros(sample.shape[0], sample.shape[1] + border_size * 2,
-                                    sample.shape[2] + border_size * 2).to(sample.device)
-        index = label
-
-        for i in range(border_size):
-            border_tensor[index, i, :] = 1
-            border_tensor[index, -i, :] = 1
-            border_tensor[index, :, i] = 1
-            border_tensor[index, :, -i] = 1
+        border_tensor = create_border(sample, label, )
 
         ### Add border tensor to
         r = combine_border_and_sample(sample, border_tensor, border_size=border_size)
@@ -143,8 +139,33 @@ def add_border_to_samples(samples, labels, to_rgb=True, border_size=5):
     return result
 
 
+### To add colors, add a tensor with the right rgb colors.
+COLORLIST = [
+    torch.tensor([1., 0., 0.]),
+    torch.tensor([0., 1., 0.]),
+    torch.tensor([0., 0., 1.]),
+    torch.tensor([0.8, 0.8, 0.]),
+]
+
+
+def create_border(sample, label, border_size=5, colors=COLORLIST):
+    border_tensor = torch.zeros(sample.shape[0], sample.shape[1] + border_size * 2,
+                                sample.shape[2] + border_size * 2).to(sample.device)
+    index = label
+    color = colors[index]
+
+    ### Make sure the color is of the right shape to copy it.
+    color = color.reshape(3, -1).repeat(1, border_tensor.shape[2])
+
+    for i in range(border_size):
+        border_tensor[:, i, :] = color
+        border_tensor[:, -i, :] = color
+        border_tensor[:, :, i] = color
+        border_tensor[:, :, -i] = color
+    return border_tensor
+
+
 def combine_border_and_sample(sample, border, border_size=5):
-    print(border.shape)
     result = torch.zeros(border.shape).to(border.device)
     result += border
     result[:, border_size:-border_size, border_size: -border_size] = sample
