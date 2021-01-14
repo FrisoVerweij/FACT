@@ -12,6 +12,25 @@ from models.models_pl import CVAE
 
 from utils import *
 
+import numpy as np
+
+
+def get_x_vals(val_loader, n_classes=2, n_for_each_class=4):
+    ###
+    data, targets = next(iter(val_loader))
+    y_val = targets.numpy()
+
+    indices = [
+
+    ]
+    for i in range(n_classes):
+        indices += list(np.where(y_val == i)[0])[:n_for_each_class]
+
+    indices = torch.tensor(indices)
+
+    x_val = torch.index_select(data, 0, indices)
+    return x_val
+
 
 def train_cvae_pl(config):
     """
@@ -31,10 +50,7 @@ def train_cvae_pl(config):
     classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier']))
     classifier.to(config['device'])
 
-    ### Get the pictures
-    data, targets = next(iter(val_loader))
-    y_val = targets.numpy()
-    x_val = data
+    x_val = get_x_vals(val_loader)
 
     # Create a PyTorch Lightning trainer with the generation callback
     gen_callback_digit = GenerateCallbackDigit(x_val, every_n_epochs=1, save_to_disk=True)

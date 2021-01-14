@@ -72,7 +72,7 @@ class CVAE(pl.LightningModule):
                 z_new[latent_dim] += latent_val
                 x_generated = self.decoder(torch.unsqueeze(torch.from_numpy(z_new), 0).to(self.device))
                 y, y_probs = self.classifier(x_generated)
-                print(y_probs)
+
                 y = torch.argmax(y_probs, dim=1)
 
                 labels.append(y)
