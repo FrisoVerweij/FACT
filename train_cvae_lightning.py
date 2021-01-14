@@ -47,7 +47,7 @@ def train_cvae_pl(config):
     train_loader, val_loader = get_mnist_dataloaders(digits_to_include=config['mnist_digits'])
 
     classifier = select_classifier(config)
-    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier']))
+    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
     classifier.to(config['device'])
 
     x_val = get_x_vals(val_loader)

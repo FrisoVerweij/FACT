@@ -50,9 +50,10 @@ def train(config, seed):
             loss.backward()
             optimizer.step()
 
-            print("[Train Epoch %d/%d] [Batch %d] time: %4.4f [loss: %f]" % (
-                epoch, config['epochs'], batch_count, time.time() - start_time,
-                loss.item()))
+            if not config['no_print']:
+                print("[Train Epoch %d/%d] [Batch %d] time: %4.4f [loss: %f]" % (
+                    epoch + 1, config['epochs'], batch_count, time.time() - start_time,
+                    loss.item()))
 
             batch_count += 1
 
@@ -70,7 +71,7 @@ def train(config, seed):
                 total_correct += (predictions == targets).sum().item()
 
             accuracy = total_correct / total_comparisons
-            print("[Test Epoch %d/%d] [test accuracy: %f, train accuracy: %f]" % (epoch, config['epochs'], accuracy, train_accuracy/batch_count))
+            print("[Test Epoch %d/%d] [test accuracy: %f, train accuracy: %f]" % (epoch + 1, config['epochs'], accuracy, train_accuracy/batch_count))
 
         train_accuracy = 0
     torch.save(model.state_dict(), config['save_dir'] + config['classifier'] + "_" + config['model_name'])
