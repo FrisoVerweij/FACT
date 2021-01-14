@@ -47,14 +47,19 @@ def train_cvae_pl(config):
     train_loader, val_loader = get_mnist_dataloaders(digits_to_include=config['mnist_digits'])
 
     classifier = select_classifier(config)
+
     classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
     classifier.to(config['device'])
 
-    x_val = get_x_vals(val_loader)
+    x_val = get_x_vals(val_loader, n_classes=len(config['mnist_digits']),
+                       n_for_each_class=config['n_samples_each_class'])
+
+    n_samples_total = len(config['mnist_digits']) * config['n_samples_each_class']
+
 
     # Create a PyTorch Lightning trainer with the generation callback
-    gen_callback_digit = GenerateCallbackDigit(x_val, every_n_epochs=1, save_to_disk=True)
-    gen_callback_latent = GenerateCallbackLatent(x_val, every_n_epochs=1, save_to_disk=True)
+    gen_callback_digit = GenerateCallbackDigit(x_val, every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True, )
+    gen_callback_latent = GenerateCallbackLatent(x_val, every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True)
 
     trainer = pl.Trainer(default_root_dir=config["log_dir"],
                          checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
@@ -107,9 +112,9 @@ def prepare_variables_pl(config):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='config/mnist_3_8.yml')
-
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
     config = to_vae_config(config)
+    print(config)
 
     train_cvae_pl(config)

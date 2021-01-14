@@ -6,6 +6,7 @@ general:
   num_workers: 0
   log_dir: "CVAE_logs"
   progress_bar: True
+  n_samples_each_class: 4
 dataset:
   dataset: "mnist"
   mnist_digits: [3,8]
@@ -22,8 +23,8 @@ vae:
   vae_model: "mnist_cvae"
   model_name: "model1"
   use_causal: True
-  n_alpha: 1
-  n_beta: 7
+  n_alpha: 2
+  n_beta: 6
   alpha_samples: 100
   beta_samples: 25
   lam_ml: 1
