@@ -8,10 +8,10 @@ general:
   progress_bar: True
 dataset:
   dataset: "mnist"
-  mnist_digits: [3,8]
+  mnist_digits: null
 classifier:
   classifier: "mnist_cnn"
-  model_name: "model1"
+  model_name: "model_full"
   epochs: 20
   batch_size: 64
   lr: 0.1
@@ -20,10 +20,10 @@ classifier:
   no_print: True
 vae:
   vae_model: "mnist_cvae"
-  model_name: "model1"
+  model_name: "model_full"
   use_causal: True
-  n_alpha: 1
-  n_beta: 7
+  n_alpha: 2
+  n_beta: 6
   alpha_samples: 100
   beta_samples: 25
   lam_ml: 1
@@ -34,9 +34,5 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 20
-
-
-
-
+  epochs: 30
 
