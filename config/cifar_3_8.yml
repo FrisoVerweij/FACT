@@ -8,11 +8,11 @@ general:
   progress_bar: True
   n_samples_each_class: 4
 dataset:
-  dataset: "mnist"
-  mnist_digits: null
+  dataset: "cifar10"
+  mnist_digits: [3,8]
 classifier:
-  classifier: "mnist_cnn"
-  model_name: "all"
+  classifier: "cifar10_cnn"
+  model_name: "3_8"
   epochs: 20
   batch_size: 64
   lr: 0.1
@@ -20,8 +20,8 @@ classifier:
   optimizer: "SGD"
   no_print: True
 vae:
-  vae_model: "mnist_cvae"
-  model_name: "all"
+  vae_model: "cifar10_cvae"
+  model_name: "3_8"
   use_causal: True
   n_alpha: 1
   n_beta: 7
@@ -34,7 +34,7 @@ vae:
   b2: 0.999
   weight_decay: 0
   optimizer: "Adam"
-  image_size: 28
+  image_size: 32
   epochs: 1
 
 

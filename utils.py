@@ -39,25 +39,18 @@ def select_classifier(config):
     :return: nn.module
     '''
 
+    if config["mnist_digits"] is None:
+        output_dim = 10
+    else:
+        output_dim = len(config["mnist_digits"])
+
     if config["classifier"] in ['mnist_cnn', 'fmnist_cnn']:
-        if config["mnist_digits"] is None:
-            output_dim = 10
-        else:
-            output_dim = len(config["mnist_digits"])
         return models_classifiers.MNIST_CNN(output_dim)
 
     elif config["classifier"] == 'mnist_cnn_overfit':
-        if config["mnist_digits"] is None:
-            output_dim = 10
-        else:
-            output_dim = len(config["mnist_digits"])
         return models_classifiers.MNIST_CNN_Overfit(output_dim)
 
     elif config["classifier"] == 'cifar10_cnn':
-        if config["mnist_digits"] is None:
-            output_dim = 10
-        else:
-            output_dim = len(config["mnist_digits"])
         return models_classifiers.CIFAR10_CNN(output_dim)
 
     else:
@@ -168,7 +161,6 @@ def reconstruction_loss(x_reconstructed, x):
 
 def kl_divergence_loss(mean, logvar):
     return ((mean**2 + logvar.exp() - 1 - logvar) / 2).mean()
-
 
 
 def to_classifier_config(config):
