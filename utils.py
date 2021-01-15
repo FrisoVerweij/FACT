@@ -2,7 +2,7 @@ import dataset
 import torch.nn as nn
 import torch
 from models import models_classifiers, models_vae
-
+import numpy as np
 
 def select_dataloader(config):
     '''
@@ -31,7 +31,6 @@ def select_dataloader(config):
 
     else:
         raise Exception("No valid dataset selected!")
-
 
 def select_classifier(config):
     '''
@@ -64,8 +63,6 @@ def select_classifier(config):
     else:
         raise Exception("No valid model selected!")
 
-
-
 def select_optimizer(config, model, model_2=None):
     '''
     Selects an optimizer given the hyperparameters
@@ -85,23 +82,21 @@ def select_optimizer(config, model, model_2=None):
     else:
         raise Exception("No valid optimizer selected!")
 
-
-def select_vae_model(config, z_dim):
+def select_vae_model(config):
     if config["vae_model"] in ["mnist_cvae", "fmnist_cvae"]:
-        encoder = models_vae.Encoder(z_dim, 1, config["image_size"] ** 2)
-        decoder = models_vae.Decoder(z_dim, 1, config["image_size"] ** 2)
+        encoder = models_vae.Encoder(config['z_dim'], 1, config["image_size"] ** 2)
+        decoder = models_vae.Decoder(config['z_dim'], 1, config["image_size"] ** 2)
     elif config["vae_model"] == "cifar10_cvae":
-        encoder = models_vae.Encoder_cifar10(z_dim, 3, config["image_size"] ** 2)
-        decoder = models_vae.Decoder_cifar10(z_dim, 3, config["image_size"] ** 2)
+        encoder = models_vae.Encoder_cifar10(config['z_dim'], 3, config["image_size"] ** 2)
+        decoder = models_vae.Decoder_cifar10(config['z_dim'], 3, config["image_size"] ** 2)
     elif config["vae_model"] == "cifar10_cvae_sasha":
-        encoder = models_vae.Encoder_cifar10_sasha(z_dim, 3, config["image_size"])  # note that here we do not square the image size
-        decoder = models_vae.Decoder_cifar10_sasha(z_dim, 3, config["image_size"])
+        encoder = models_vae.Encoder_cifar10_sasha(config['z_dim'], 3, config["image_size"])  # note that here we do not square the image size
+        decoder = models_vae.Decoder_cifar10_sasha(config['z_dim'], 3, config["image_size"])
     else:
         raise Exception("No valid encoder/decoder selected!")
 
     return encoder, decoder
 
-# Very basic weight initialization method
 def weights_init_normal(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
@@ -109,6 +104,64 @@ def weights_init_normal(m):
     elif classname.find('linear') != -1:
         torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
         torch.nn.init.constant_(m.bias.data, 0.0)
+
+def VAE_LL_loss(Xbatch, Xest, logvar, mu):
+    batch_size = Xbatch.shape[0]
+    sse_loss = torch.nn.MSELoss(reduction='sum')  # sum of squared errors
+    KLD = 1. / batch_size * -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    mse = 1. / batch_size * sse_loss(Xest, Xbatch)
+    auto_loss = mse + KLD
+    return auto_loss, mse, KLD
+
+def joint_uncond(params, decoder, classifier, device):
+    eps = 1e-8
+    I = 0.0
+    q = torch.zeros(params['number_of_classes']).to(device)
+    classifier.eval()
+    for i in range(0, params['alpha_samples']):
+        alpha = np.random.randn(params['n_alpha'])
+        zs = np.zeros((params['beta_samples'], params['z_dim']))
+        for j in range(0, params['beta_samples']):
+            beta = np.random.randn(params['n_beta'])
+            zs[j, :params['n_alpha']] = alpha
+            zs[j, params['n_alpha']:] = beta
+
+        # decode and classify batch of Nbeta samples with same alpha
+        xhat = decoder(torch.from_numpy(zs).float().to(device))
+        yhat = classifier(xhat)[1]
+        p = 1. / float(params['beta_samples']) * torch.sum(yhat, 0)  # estimate of p(y|alpha)
+        I = I + 1. / float(params['alpha_samples']) * torch.sum(torch.mul(p, torch.log(p + eps)))
+        q = q + 1. / float(params['alpha_samples']) * p  # accumulate estimate of p(y)
+
+    I = I - torch.sum(torch.mul(q, torch.log(q + eps)))
+    negCausalEffect = -I
+    info = {"xhat": xhat, "yhat": yhat}
+    return negCausalEffect, info
+
+def prepare_variables_pl(config):
+    # The device to run the model on
+    z_dim = config['n_alpha'] + config['n_beta']
+    x_dim = config['image_size'] ** 2
+
+    if config['mnist_digits'] == None:
+        n_classes = 10
+    else:
+        n_classes = len(config['mnist_digits'])
+
+    params = {
+        "number_of_classes": n_classes,
+        "alpha_samples": config['alpha_samples'],
+        "beta_samples": config['beta_samples'],
+        "z_dim": z_dim,
+        "n_alpha": config['n_alpha'],
+        "n_beta": config['n_beta'],
+        "channel_dimension": 1,
+        "x_dim": x_dim
+    }
+
+    config = {**config, **params}
+    return config
+
 
 def reconstruction_loss(x_reconstructed, x):
     return nn.BCELoss(reduction='sum')(x_reconstructed, x) / x.size(0)

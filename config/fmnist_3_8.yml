@@ -1,0 +1,43 @@
+
+general:
+  save_dir: "./pretrained_models_local/."
+  device: "cuda"
+  seed: 42
+  num_workers: 0
+  log_dir: "CVAE_logs"
+  progress_bar: True
+  n_samples_each_class: 4
+dataset:
+  dataset: "fmnist"
+  mnist_digits: [3,8]
+classifier:
+  classifier: "fmnist_cnn"
+  model_name: "model1"
+  epochs: 20
+  batch_size: 64
+  lr: 0.1
+  momentum: 0.5
+  optimizer: "SGD"
+  no_print: True
+vae:
+  vae_model: "fmnist_cvae"
+  model_name: "model1"
+  use_causal: True
+  n_alpha: 2
+  n_beta: 6
+  alpha_samples: 100
+  beta_samples: 25
+  lam_ml: 1
+  batch_size: 64
+  lr: 0.0005
+  b1: 0.5
+  b2: 0.999
+  weight_decay: 0
+  optimizer: "Adam"
+  image_size: 28
+  epochs: 20
+
+
+
+
+

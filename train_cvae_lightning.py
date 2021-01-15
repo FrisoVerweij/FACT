@@ -2,17 +2,14 @@ import argparse
 import os
 
 import yaml
-from torchvision.utils import make_grid, save_image
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-
 from callbacks.generators import GenerateCallbackDigit, GenerateCallbackLatent
-from dataset import get_mnist_dataloaders
-from models.models_pl import CVAE
-
-from utils import *
 
 import numpy as np
+
+from models.models_pl import Generic_model
+from utils import *
 
 
 def get_x_vals(val_loader, n_classes=2, n_for_each_class=4):
@@ -40,26 +37,29 @@ def train_cvae_pl(config):
 
     """
     config = prepare_variables_pl(config)
-
     pl.seed_everything(config["seed"])  # To be reproducible
-
     os.makedirs(config['log_dir'], exist_ok=True)
-    train_loader, val_loader = get_mnist_dataloaders(digits_to_include=config['mnist_digits'])
 
+    # Select the data
+    train_loader, val_loader = select_dataloader(config)
+
+    # Select and load the classifier
     classifier = select_classifier(config)
-
     classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
-    classifier.to(config['device'])
 
-    x_val = get_x_vals(val_loader, n_classes=len(config['mnist_digits']),
+    # Select the encoder, decoder and optimizer
+    encoder, decoder = select_vae_model(config)
+    optimizer = select_optimizer(config, encoder, decoder)
+
+    # What does this do? Is it just for the callbacks (also the n_samples_total below?)
+    x_val = get_x_vals(val_loader, n_classes=config['number_of_classes'],
                        n_for_each_class=config['n_samples_each_class'])
 
-    n_samples_total = len(config['mnist_digits']) * config['n_samples_each_class']
-
+    n_samples_total = config['number_of_classes'] * config['n_samples_each_class']
 
     # Create a PyTorch Lightning trainer with the generation callback
-    gen_callback_digit = GenerateCallbackDigit(x_val, every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True, )
-    gen_callback_latent = GenerateCallbackLatent(x_val, every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True)
+    gen_callback_digit = GenerateCallbackDigit(x_val, dataset=config['dataset'], every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True)
+    gen_callback_latent = GenerateCallbackLatent(x_val,  dataset=config['dataset'], every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True)
 
     trainer = pl.Trainer(default_root_dir=config["log_dir"],
                          checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
@@ -71,47 +71,19 @@ def train_cvae_pl(config):
     trainer.logger._default_hp_metric = None  # Optional logging argument that we don't need
 
     # Create model
-
-    model = CVAE(config["z_dim"], config['channel_dimension'], config["x_dim"], classifier, config,
-                 device=config["device"])
+    model = Generic_model(config, encoder, decoder, classifier, optimizer).to(config['device'])
 
     # Training
     # gen_callback.sample_and_save(trainer, model, epoch=0)  # Initial sample
     trainer.fit(model, train_loader, val_loader)
 
-    #### Calculate and return metric
-
-
-def prepare_variables_pl(config):
-    # The device to run the model on
-    device = config['device']
-    z_dim = config['n_alpha'] + config['n_beta']
-    x_dim = config['image_size'] ** 2
-    image_size = config['image_size']
-
-    if config['mnist_digits'] == None:
-        n_classes = 10
-    else:
-        n_classes = len(config['mnist_digits'])
-
-    params = {
-        "number_of_classes": n_classes,
-        "alpha_samples": config['alpha_samples'],
-        "beta_samples": config['beta_samples'],
-        "z_dim": z_dim,
-        "n_alpha": config['n_alpha'],
-        "n_beta": config['n_beta'],
-        "channel_dimension": 1,
-        "x_dim": x_dim
-    }
-
-    config = {**config, **params}
-    return config
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8.yml')
+    #parser.add_argument('--config', default='config/mnist_3_8.yml')
+    #parser.add_argument('--config', default='config/fmnist_3_8.yml')
+    #parser.add_argument('--config', default='config/cifar10_3_8_basic.yml')
+    parser.add_argument('--config', default='config/mnist_all.yml')
+
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
     config = to_vae_config(config)
