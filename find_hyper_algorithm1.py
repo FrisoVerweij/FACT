@@ -35,7 +35,9 @@ def algorithm1(classifier, train_data, test_data, config):
     causal_best = 10000.0
     start_time = time.time()
     optimize_on = 'both'
+    k_prev, l_prev, lamb_prev = 0, 0, 0.0  # after we plateau we take the values just before
     while(not plateau):
+        K_prev, L_prev, lamb_prev = K, L, lamb
         K += 1
         L -= 1
         lamb = 0.0 # not sure if lambda resets after every iteration
@@ -63,17 +65,17 @@ def algorithm1(classifier, train_data, test_data, config):
         print("step 3, finished iteration, [best K: %d] [best L: %d] [best lamb: %f] [average causal: %f] time: %4.4f" %
               (K, L, lamb, average_causal, time.time() - start_time))
 
+
     print("finished algorithm, [best K: %d] [best L: %d] [best lamb: %f] [best nll: %f] [best causal: %f] time: %4.4f" %
-          (K, L, lamb, nll_best, causal_best, time.time() - start_time))
+          (K_prev, L_prev, lamb_prev, nll_best, causal_best, time.time() - start_time))
 
 def train_and_test(optimize_on, K, L, lamb, classifier, train_data, test_data, config):
     z_dim = K + L
+    config['z_dim'], config['n_alpha'], config['n_beta'] = z_dim, K, L
 
     encoder, decoder = select_vae_model(config)
     encoder, decoder = encoder.to(config['device']), decoder.to(config['device'])
     optimizer = select_optimizer(config, encoder, decoder)
-
-    config['z_dim'], config['n_alpha'], config['n_beta'] = z_dim, K, L
 
     encoder_trained, decoder_trained = train(optimize_on, encoder, decoder,optimizer, classifier, train_data,lamb, config)
 
