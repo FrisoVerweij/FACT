@@ -3,28 +3,28 @@ import yaml
 from utils import *
 import time
 import numpy as np
+from torchvision.utils import make_grid, save_image
+import argparse
 
+def train_cvae(config, dataloader, encoder, decoder, classifier, optimizer):
 
-def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, device, params, use_causal_effect,
-               lam_ML):
     # --- train ---
     start_time = time.time()
-    for epoch in range(n_epochs):
+    for epoch in range(config['epochs']):
         batch_count = 0
-        for x, y in dataloader:
-            inputs = x.to(device)
-            targets = y.to(device)
+        for imgs, targets in dataloader:
+            imgs, targets = imgs.to(config['device']), targets.to(config['device'])
             optimizer.zero_grad()
 
-            latent_out, mu, logvar = encoder(inputs)
+            latent_out, mu, logvar = encoder(imgs)
 
             x_generated = decoder(latent_out)
 
-            nll, nll_mse, nll_kld = VAE_LL_loss(inputs, x_generated, logvar, mu)
+            nll, nll_mse, nll_kld = VAE_LL_loss(imgs, x_generated, logvar, mu)
 
-            causalEffect, ceDebug = joint_uncond(params, decoder, classifier, device)
+            causalEffect, ceDebug = joint_uncond(config, decoder, classifier, device)
 
-            loss = use_causal_effect * causalEffect + lam_ML * nll
+            loss = config['use_causal'] * causalEffect + config['lam_ml'] * nll
 
             # this is for CIFAR10, just ignore it
             # loss = kl_divergence_loss(mu, logvar) + reconstruction_loss(x_generated, inputs)
@@ -47,44 +47,7 @@ def train_cvae(encoder, decoder, classifier, dataloader, n_epochs, optimizer, de
 
     return encoder, decoder
 
-
-def VAE_LL_loss(Xbatch, Xest, logvar, mu):
-    batch_size = Xbatch.shape[0]
-    sse_loss = torch.nn.MSELoss(reduction='sum')  # sum of squared errors
-    KLD = 1. / batch_size * -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    mse = 1. / batch_size * sse_loss(Xest, Xbatch)
-    auto_loss = mse + KLD
-    return auto_loss, mse, KLD
-
-
-def joint_uncond(params, decoder, classifier, device):
-    eps = 1e-8
-    I = 0.0
-    q = torch.zeros(params['number_of_classes']).to(device)
-    classifier.eval()
-    for i in range(0, params['alpha_samples']):
-        alpha = np.random.randn(params['n_alpha'])
-        zs = np.zeros((params['beta_samples'], params['z_dim']))
-        for j in range(0, params['beta_samples']):
-            beta = np.random.randn(params['n_beta'])
-            zs[j, :params['n_alpha']] = alpha
-            zs[j, params['n_alpha']:] = beta
-
-        # decode and classify batch of Nbeta samples with same alpha
-        xhat = decoder(torch.from_numpy(zs).float().to(device))
-
-        yhat = classifier(xhat)[1]
-        p = 1. / float(params['beta_samples']) * torch.sum(yhat, 0)  # estimate of p(y|alpha)
-        I = I + 1. / float(params['alpha_samples']) * torch.sum(torch.mul(p, torch.log(p + eps)))
-        q = q + 1. / float(params['alpha_samples']) * p  # accumulate estimate of p(y)
-
-    I = I - torch.sum(torch.mul(q, torch.log(q + eps)))
-    negCausalEffect = -I
-    info = {"xhat": xhat, "yhat": yhat}
-    return negCausalEffect, info
-
-
-def algorithm1(classifier, train_data, test_data, epochs, device, params, use_causal, config):
+def algorithm1(classifier, train_data, test_data, config):
     # step 1
     plateau = False
     K, L, lamb = 0, 0, 0.0  # K = alpha L = beta
@@ -94,7 +57,7 @@ def algorithm1(classifier, train_data, test_data, epochs, device, params, use_ca
     while (not plateau):
         L += 1
         _, _, average_nll, _, _ = \
-            train_and_test(optimize_on, K,L,lamb, classifier, train_data, test_data, epochs, device, params, use_causal, config)
+            train_and_test(optimize_on, K ,L ,lamb, classifier, train_data, test_data, config)
 
         if average_nll < nll_best:
             nll_best = average_nll
@@ -122,7 +85,7 @@ def algorithm1(classifier, train_data, test_data, epochs, device, params, use_ca
         while(not approaches):
             lamb += 0.01
             _, _, average_nll, average_causal, _ = \
-                train_and_test(optimize_on, K, L, lamb, classifier, train_data, test_data, epochs, device, params, use_causal, config)
+                train_and_test(optimize_on, K, L, lamb, classifier, train_data, test_data, config)
 
             # note that here lambda is not incremented until the best one is found but until it reaches the desired
             # accuracy
@@ -143,28 +106,26 @@ def algorithm1(classifier, train_data, test_data, epochs, device, params, use_ca
     print("finished algorithm, [best K: %d] [best L: %d] [best lamb: %f] [best nll: %f] [best causal: %f] time: %4.4f" %
           (K, L, lamb, nll_best, causal_best, time.time() - start_time))
 
-def train_and_test(optimize_on, K, L, lamb, classifier, train_data, test_data, epochs, device, params, use_causal, config):
+def train_and_test(optimize_on, K, L, lamb, classifier, train_data, test_data, config):
     z_dim = K + L
 
-    encoder, decoder = select_vae_model(config, z_dim)
-    encoder, decoder = encoder.to(device), decoder.to(device)
+    encoder, decoder = select_vae_model(config)
+    encoder, decoder = encoder.to(config['device']), decoder.to(config['device'])
     optimizer = select_optimizer(config, encoder, decoder)
 
-    params['z_dim'], params['n_alpha'], params['n_beta'] = z_dim, K, L
+    config['z_dim'], config['n_alpha'], config['n_beta'] = z_dim, K, L
 
-    encoder_trained, decoder_trained = train(optimize_on, encoder, decoder,optimizer, classifier, train_data, epochs,
-                                        device, params, use_causal, lamb)
+    encoder_trained, decoder_trained = train(optimize_on, encoder, decoder,optimizer, classifier, train_data,lamb, config)
 
-    average_nll, average_causal_effect, average_total = test(encoder_trained, decoder_trained, classifier, test_data,
-                                        device, params, use_causal, lamb)
+    average_nll, average_causal_effect, average_total = test(encoder_trained, decoder_trained, classifier, test_data, lamb, config)
 
     return encoder_trained, decoder_trained, average_nll, average_causal_effect, average_total
 
-def train(optimize_on, encoder, decoder, optimizer, classifier, train_dataset, epochs, device, params, use_causal, lamb):
+def train(optimize_on, encoder, decoder, optimizer, classifier, train_dataset, lamb, config):
 
-    for epoch in range(epochs):  # n_epochs determines how long we will train the model before we finish
+    for epoch in range(config['epochs']):  # n_epochs determines how long we will train the model before we finish
         for imgs, targets in train_dataset:
-            imgs, targets = imgs.to(device), targets.to(device)
+            imgs, targets = imgs.to(config['device']), targets.to(config['device'])
             optimizer.zero_grad()
 
             latent_out, mu, logvar = encoder(imgs)
@@ -176,33 +137,33 @@ def train(optimize_on, encoder, decoder, optimizer, classifier, train_dataset, e
                 loss = nll
 
             elif optimize_on == 'causal':
-                causalEffect, ceDebug = joint_uncond(params, decoder, classifier, device)
+                causalEffect, ceDebug = joint_uncond(config, decoder, classifier, config['device'])
                 loss = causalEffect
 
             elif optimize_on == 'both':
-                causalEffect, ceDebug = joint_uncond(params, decoder, classifier, device)
-                loss = use_causal * causalEffect + lamb * nll
+                causalEffect, ceDebug = joint_uncond(config, decoder, classifier, config['device'])
+                loss = config['use_causal'] * causalEffect + lamb * nll
 
             loss.backward()
             optimizer.step()
 
     return encoder, decoder
 
-def test(encoder, decoder,classifier, test_data, device, params, use_causal, lamb):
+def test(encoder, decoder,classifier, test_data, lamb, config):
     # Test the model based on its average test loss
     encoder.eval(); decoder.eval()
     total_nll = 0; total_causal_effect = 0; total_loss = 0
     batch = 0
     with torch.no_grad():
         for imgs, targets in test_data:
-            imgs, targets = imgs.to(device), targets.to(device)
+            imgs, targets = imgs.to(config['device']), targets.to(config['device'])
 
             latent_out, mu, logvar = encoder(imgs)
             x_generated = decoder(latent_out)
 
             nll, nll_mse, nll_kld = VAE_LL_loss(imgs, x_generated, logvar, mu)
-            causalEffect, ceDebug = joint_uncond(params, decoder, classifier, device)
-            loss = use_causal * causalEffect + lamb * nll
+            causalEffect, ceDebug = joint_uncond(config, decoder, classifier, config['device'])
+            loss = config['use_causal'] * causalEffect + lamb * nll
 
             total_nll += nll
             total_causal_effect += causalEffect
@@ -218,10 +179,6 @@ def test(encoder, decoder,classifier, test_data, device, params, use_causal, lam
 
 
 if __name__ == "__main__":
-    # Set seeds to make test reproducible
-    torch.manual_seed(0)
-    np.random.seed(0)
-
     # Parse the arguments
     parser = argparse.ArgumentParser()
 
@@ -232,15 +189,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
     config = to_vae_config(config)
+    config = prepare_variables_pl(config)
+
+    # Set seeds to make test reproducible
+    torch.manual_seed(config['seed'])
+    np.random.seed(config['seed'])
 
     # The device to run the model on
     device = config['device']
 
-    # The latent variable dimensions z_dim
-    z_dim = config['n_alpha'] + config['n_beta']
-
     # The decoder and encoder to use
-    encoder, decoder = select_vae_model(config, z_dim)
+    encoder, decoder = select_vae_model(config)
     encoder, decoder = encoder.to(device), decoder.to(device)
 
     # The classifier to use
@@ -254,24 +213,9 @@ if __name__ == "__main__":
     # The optimizer is loaded
     optimizer = select_optimizer(config, encoder, decoder)
 
-    # Additional parameters that are mainly used for the cuasal term of the loss
-    if config['mnist_digits'] == None:
-        n_classes = 10
-    else:
-        n_classes = len(config['mnist_digits'])
-    params = {
-        "number_of_classes": n_classes,
-        "alpha_samples": config['alpha_samples'],
-        "beta_samples": config['beta_samples'],
-        "z_dim": z_dim,
-        "n_alpha": config['n_alpha'],
-        "n_beta": config['n_beta']
-    }
-
     if not config['find_params']:
-        encoder, decoder = train_cvae(encoder, decoder, classifier, train_dataset, config['epochs'], optimizer,
-                                     device, params, config['use_causal'], config['lam_ml'])
+        encoder, decoder = train_cvae(config, train_dataset, encoder, decoder, classifier, optimizer)
     else:
-        algorithm1(classifier, train_dataset, test_dataset, config['epochs'], device, params, config['use_causal'], config)
+        algorithm1(classifier, train_dataset, test_dataset, config)
 
 

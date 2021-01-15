@@ -8,7 +8,7 @@ class GenerateCallbackDigit(pl.Callback):
     Creates a plot based around a digit
     '''
 
-    def __init__(self, to_sample_from, n_samples=5, every_n_epochs=5, save_to_disk=False, border_size=5):
+    def __init__(self, to_sample_from, dataset, n_samples=5, every_n_epochs=5, save_to_disk=False, border_size=5):
         """
         Inputs:
             batch_size - Number of images to generate
@@ -20,8 +20,8 @@ class GenerateCallbackDigit(pl.Callback):
         self.to_sample_from = to_sample_from
         self.n_samples = n_samples
         self.save_to_disk = save_to_disk
-
         self.border_size = border_size
+        self.to_rgb = False if dataset == 'cifar10' else True
 
     def on_epoch_end(self, trainer, pl_module):
         """
@@ -44,7 +44,7 @@ class GenerateCallbackDigit(pl.Callback):
         for i in range(self.n_samples):
             samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
 
-            samples = add_border_to_samples(samples, y, border_size=self.border_size)
+            samples = add_border_to_samples(samples, y, border_size=self.border_size, to_rgb=self.to_rgb)
 
             grid = make_grid(samples, nrow=7)
             name = 'samples_{}_{}'.format(i, epoch)
@@ -60,7 +60,7 @@ class GenerateCallbackLatent(pl.Callback):
     Creates a plot based around the latent space.
     '''
 
-    def __init__(self, to_sample_from, n_samples=8, latent_dimensions=8, every_n_epochs=5, save_to_disk=False,
+    def __init__(self, to_sample_from, dataset, n_samples=8, latent_dimensions=8, every_n_epochs=5, save_to_disk=False,
                  border_size=5):
         """
         Inputs:
@@ -75,6 +75,7 @@ class GenerateCallbackLatent(pl.Callback):
         self.latent_dimensions = latent_dimensions
         self.save_to_disk = save_to_disk
         self.border_size = border_size
+        self.to_rgb = False if dataset == 'cifar10' else True
 
     def on_epoch_end(self, trainer, pl_module):
         """
@@ -97,7 +98,7 @@ class GenerateCallbackLatent(pl.Callback):
         results = []
         for i in range(self.n_samples):
             samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
-            samples = add_border_to_samples(samples, y, border_size=self.border_size)
+            samples = add_border_to_samples(samples, y, border_size=self.border_size, to_rgb=self.to_rgb)
             results.append(samples)
 
         ### Loop over the latent dimensions
@@ -126,6 +127,7 @@ def grey_to_rgb(sample):
 def add_border_to_samples(samples, labels, to_rgb=True, border_size=5):
     if to_rgb:
         samples = [grey_to_rgb(sample) for sample in samples]
+
     result = []
     for sample, label in zip(samples, labels):
         ### Create the border tensor
