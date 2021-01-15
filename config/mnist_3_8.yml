@@ -12,7 +12,7 @@ dataset:
   mnist_digits: [3,8]
 classifier:
   classifier: "mnist_cnn"
-  model_name: "3_8"
+  model_name: "mnist_3_8"
   epochs: 20
   batch_size: 64
   lr: 0.1
@@ -21,7 +21,7 @@ classifier:
   no_print: True
 vae:
   vae_model: "mnist_cvae"
-  model_name: "3_8"
+  model_name: "mnist_3_8"
   use_causal: True
   n_alpha: 1
   n_beta: 7
