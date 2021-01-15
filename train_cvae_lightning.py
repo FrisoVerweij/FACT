@@ -7,6 +7,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from callbacks.generators import GenerateCallbackDigit, GenerateCallbackLatent
 
 import numpy as np
+import torch
 
 from models.models_pl import Generic_model
 from utils import *
@@ -14,18 +15,26 @@ from utils import *
 
 def get_x_vals(val_loader, n_classes=2, n_for_each_class=4):
     ###
+
+    # Here we get a sufficient number of samples to get the images from
     data, targets = next(iter(val_loader))
-    y_val = targets.numpy()
+    for x, y in val_loader:
+        data = torch.cat([data, x], dim=0)
+        targets = torch.cat([targets, y], dim=0)
 
-    indices = [
+        # Here we make sure that we have all the classes and that we have enough samples
+        if len(torch.unique(targets)) >= n_classes:
+            y_val = targets.numpy()
+            indices = []
+            for i in range(n_classes):
+                indices += list(np.where(y_val == i)[0])[:n_for_each_class]
 
-    ]
-    for i in range(n_classes):
-        indices += list(np.where(y_val == i)[0])[:n_for_each_class]
+            if indices == n_classes*n_for_each_class:
+                break
 
     indices = torch.tensor(indices)
-
     x_val = torch.index_select(data, 0, indices)
+
     return x_val
 
 
@@ -79,10 +88,7 @@ def train_cvae_pl(config):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    #parser.add_argument('--config', default='config/mnist_3_8.yml')
-    #parser.add_argument('--config', default='config/fmnist_3_8.yml')
-    #parser.add_argument('--config', default='config/cifar10_3_8_basic.yml')
-    parser.add_argument('--config', default='config/mnist_all.yml')
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
 
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
