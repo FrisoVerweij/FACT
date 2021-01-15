@@ -143,16 +143,16 @@ def add_border_to_samples(samples, labels, to_rgb=True, border_size=5):
 
 ### To add colors, add a tensor with the right rgb colors.
 COLORLIST = [
-    torch.tensor([0.298, 0.447, 0.690]),
-    torch.tensor([0.866, 0.517, 0.321]),
-    torch.tensor([0.333, 0.658, 0.407]),
-    torch.tensor([0.768, 0.305, 0.321]),
-    torch.tensor([0.505, 0.447, 0.701]),
-    torch.tensor([0.576, 0.470, 0.376]),
-    torch.tensor([0.854, 0.545, 0.764]),
-    torch.tensor([0.549, 0.549, 0.549]),
-    torch.tensor([0.800, 0.725, 0.454]),
-    torch.tensor([0.392, 0.709, 0.803]),
+    torch.tensor([0.121, 0.466, 0.705]),
+    torch.tensor([1.000, 0.498, 0.054]),
+    torch.tensor([0.172, 0.627, 0.172]),
+    torch.tensor([0.839, 0.152, 0.156]),
+    torch.tensor([0.580, 0.403, 0.741]),
+    torch.tensor([0.549, 0.337, 0.294]),
+    torch.tensor([0.890, 0.466, 0.760]),
+    torch.tensor([0.498, 0.498, 0.498]),
+    torch.tensor([0.737, 0.741, 0.133]),
+    torch.tensor([0.090, 0.745, 0.811]),
 ]
 
 
