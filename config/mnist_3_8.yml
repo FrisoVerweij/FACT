@@ -6,7 +6,7 @@ general:
   num_workers: 0
   log_dir: "CVAE_logs"
   progress_bar: True
-  n_samples_each_class: 4
+  n_samples_each_class: 3
 dataset:
   dataset: "mnist"
   mnist_digits: [3,8]
@@ -35,7 +35,7 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 1
+  epochs: 30
 
 
 

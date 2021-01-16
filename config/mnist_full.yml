@@ -23,8 +23,8 @@ vae:
   vae_model: "mnist_cvae"
   model_name: "mnist_full"
   use_causal: True
-  n_alpha: 2
-  n_beta: 6
+  n_alpha: 3
+  n_beta: 7
   alpha_samples: 100
   beta_samples: 25
   lam_ml: 0.1
@@ -35,7 +35,7 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 1
+  epochs: 30
 
 
 
