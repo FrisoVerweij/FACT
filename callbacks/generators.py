@@ -52,7 +52,7 @@ class GenerateCallbackDigit(pl.Callback):
             logger.add_image('sample_{}'.format(i), grid, epoch)
 
             if self.save_to_disk:
-                save_image(grid, trainer.logger.log_dir + '\\' + name + "_sample.png")
+                save_image(grid, trainer.logger.log_dir + "/" + name + "_sample.png")
 
 
 class GenerateCallbackLatent(pl.Callback):
@@ -117,7 +117,7 @@ class GenerateCallbackLatent(pl.Callback):
             logger.add_image('latent_sample_{}'.format(i), grid, epoch)
 
         if self.save_to_disk:
-            save_image(grid, trainer.logger.log_dir + '\\' + name + "_sample.png")
+            save_image(grid, trainer.logger.log_dir + "/" + name + "_sample.png")
 
 
 def grey_to_rgb(sample):

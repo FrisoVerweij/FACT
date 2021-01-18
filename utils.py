@@ -98,6 +98,30 @@ def weights_init_normal(m):
         torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
         torch.nn.init.constant_(m.bias.data, 0.0)
 
+def prepare_variables_pl(config):
+    # The device to run the model on
+    z_dim = config['n_alpha'] + config['n_beta']
+    x_dim = config['image_size'] ** 2
+
+    if config['mnist_digits'] == None:
+        n_classes = 10
+    else:
+        n_classes = len(config['mnist_digits'])
+
+    params = {
+        "number_of_classes": n_classes,
+        "alpha_samples": config['alpha_samples'],
+        "beta_samples": config['beta_samples'],
+        "z_dim": z_dim,
+        "n_alpha": config['n_alpha'],
+        "n_beta": config['n_beta'],
+        "channel_dimension": 1,
+        "x_dim": x_dim
+    }
+
+    config = {**config, **params}
+    return config
+
 def VAE_LL_loss(Xbatch, Xest, logvar, mu):
     batch_size = Xbatch.shape[0]
     sse_loss = torch.nn.MSELoss(reduction='sum')  # sum of squared errors
@@ -130,31 +154,6 @@ def joint_uncond(params, decoder, classifier, device):
     negCausalEffect = -I
     info = {"xhat": xhat, "yhat": yhat}
     return negCausalEffect, info
-
-def prepare_variables_pl(config):
-    # The device to run the model on
-    z_dim = config['n_alpha'] + config['n_beta']
-    x_dim = config['image_size'] ** 2
-
-    if config['mnist_digits'] == None:
-        n_classes = 10
-    else:
-        n_classes = len(config['mnist_digits'])
-
-    params = {
-        "number_of_classes": n_classes,
-        "alpha_samples": config['alpha_samples'],
-        "beta_samples": config['beta_samples'],
-        "z_dim": z_dim,
-        "n_alpha": config['n_alpha'],
-        "n_beta": config['n_beta'],
-        "channel_dimension": 1,
-        "x_dim": x_dim
-    }
-
-    config = {**config, **params}
-    return config
-
 
 def reconstruction_loss(x_reconstructed, x):
     return nn.BCELoss(reduction='sum')(x_reconstructed, x) / x.size(0)
