@@ -5,16 +5,15 @@ import torch
 class BiggestDummy(nn.Module):
     def __init__(self, input_dim):
         super(BiggestDummy, self).__init__()
-        self.batch_out = torch.zeroes
+        # self.batch_out = torch.zeroes
 
     def forward(self, x):
         # WIP
-        # indices = x[:, :, 0, 0]
-        #
-        #     return torch.tensor([1, 0])
-        # else:
-        #     return torch.tensor([0, 1])
-        return None
+        indices = x[:, :, 0, 0].round().long()
+        out = torch.zeros([x.shape[0], 2])
+        out[torch.arange(out.size(0)).unsqueeze(1), indices] = 1
+
+        return out
 
 
 class MNIST_CNN(nn.Module):

@@ -14,9 +14,9 @@ from models.models_pl import CVAE
 from utils import *
 
 
-def modify_data(data):
-    data[:, :, 0, 0] = random.randint(0, 1)
-    return data
+# def modify_data(data):
+#     data[:, :, 0, 0] = random.randint(0, 1)
+#     return data
 
 
 def train_cvae_pl(config):
@@ -28,12 +28,12 @@ def train_cvae_pl(config):
     pl.seed_everything(config["seed"])  # To be reproducible
 
     os.makedirs(config['log_dir'], exist_ok=True)
-    train_loader, val_loader = get_mnist_dataloaders(digits_to_include=config['mnist_digits'])
+    train_loader, val_loader = get_mnist_dataloaders(digits_to_include=config['mnist_digits'], modify=True)
 
     ### Get the pictures
     data, targets = next(iter(val_loader))
     y_val = targets.numpy()
-    x_val = modify_data(data)
+    x_val = data
 
     # Create a PyTorch Lightning trainer with the generation callback
     gen_callback_digit = GenerateCallbackDigit(x_val, every_n_epochs=1, save_to_disk=True)
@@ -54,6 +54,10 @@ def train_cvae_pl(config):
     # Training
     # gen_callback.sample_and_save(trainer, model, epoch=0)  # Initial sample
     trainer.fit(model, train_loader, val_loader)
+    torch.save(model.encoder.state_dict(),
+               str(config['save_dir']) + str(config['vae_model']) + "_encoder" + "_" + config['model_name'])
+    torch.save(model.decoder.state_dict(),
+               str(config['save_dir']) + str(config['vae_model']) + "_decoder" + "_" + config['model_name'])
 
 
 if __name__ == "__main__":

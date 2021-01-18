@@ -7,7 +7,24 @@ from torch.utils.data.dataloader import DataLoader
 from torchvision.datasets import MNIST, FashionMNIST, CIFAR10
 from torchvision.transforms import transforms
 
-def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: list = None, size=None):
+# def modify_data(data):
+#     return data
+
+
+class CustomModify(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __call__(self, sample):
+        sample[:, :, :] = 1
+        return sample
+
+def modify(x):
+
+    # digit_filter_function = lambda x: digits_to_include.index(x) if x in digits_to_include else -1
+
+    return x
+
+def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: list = None, size=None, modify=False):
     '''
     Loads the mnist train and test set into a dataloader
     :param root: dir to save dataset
@@ -15,7 +32,10 @@ def get_mnist_dataloaders(root='./datasets/', batch_size=64, digits_to_include: 
     :param digits_to_include: array of labels to be included into the dataset. Default=None (all labels are included)
     :return: DataLoader: train_dataloader, DataLoader: test_dataloader.
     '''
-    transform = transforms.Compose([transforms.ToTensor()])
+    if modify:
+        transform = transforms.Compose([transforms.ToTensor(), CustomModify()])
+    else:
+        transform = transforms.Compose([transforms.ToTensor()])
 
     if digits_to_include is None:
         mnist_train_dataset = MNIST(root=root, download=True, train=True, transform=transform)

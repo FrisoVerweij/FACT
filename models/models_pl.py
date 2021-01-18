@@ -33,7 +33,7 @@ class CVAE(pl.LightningModule):
 
         self.image_size = params["image_size"]
 
-    def forward(self, imgs):
+    def forward(self, imgs, targets):
         """
         The forward function calculates the VAE-loss for a given batch of images.
         Inputs:
@@ -82,7 +82,7 @@ class CVAE(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # Make use of the forward function, and add logging statements
-        loss, causalEffect, nll = self.forward(batch[0])
+        loss, causalEffect, nll = self.forward(batch[0], batch[1])
         self.log("train_loss", loss, on_step=True, on_epoch=True)
         self.log("train_causalEffect", causalEffect, on_step=True, on_epoch=True)
         self.log("train_NLL", nll, on_step=True, on_epoch=True)
@@ -91,7 +91,7 @@ class CVAE(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # Make use of the forward function, and add logging statements
 
-        loss, causalEffect, nll = self.forward(batch[0])
+        loss, causalEffect, nll = self.forward(batch[0], batch[1])
         self.log("val_loss", loss, on_step=False, on_epoch=True)
         self.log("val_causalEffect", causalEffect, on_step=False, on_epoch=True)
         self.log("val_NLL", nll, on_step=False, on_epoch=True)

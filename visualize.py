@@ -1,4 +1,7 @@
 from __future__ import division
+
+import argparse
+
 import matplotlib.pyplot as plt
 
 import yaml
@@ -121,7 +124,7 @@ def get_sample_indices(y_val, labels, n_labels):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8.yml')
+    parser.add_argument('--config', default='config_local/mnist_dummy.yml')
 
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
