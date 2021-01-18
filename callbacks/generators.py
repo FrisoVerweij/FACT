@@ -102,7 +102,7 @@ class GenerateCallbackLatent(pl.Callback):
             results.append(samples)
 
         ### Loop over the latent dimensions
-        for i in range(self.latent_dimensions):
+        for i in range(self.latent_dimensions if self.latent_dimensions <= 8 else 8):
 
             latent_dim_samples = []
             start_index = 7 * i
@@ -116,8 +116,8 @@ class GenerateCallbackLatent(pl.Callback):
             logger = trainer.logger.experiment
             logger.add_image('latent_sample_{}'.format(i), grid, epoch)
 
-        if self.save_to_disk:
-            save_image(grid, trainer.logger.log_dir + "/" + name + "_sample.png")
+            if self.save_to_disk:
+                save_image(grid, trainer.logger.log_dir + "/" + name + "_sample.png")
 
 
 def grey_to_rgb(sample):
