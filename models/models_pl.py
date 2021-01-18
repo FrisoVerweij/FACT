@@ -20,16 +20,24 @@ class Generic_model(pl.LightningModule):
 
         x_generated = self.decoder(latent_out)
 
-        nll, nll_mse, nll_kld = VAE_LL_loss(imgs, x_generated, logvar, mu)
+        # This loss seemed to work out a lot better for cifar10 for both of the models that we implemented
+        if self.config["vae_model"] in ["cifar10_cvae_sasha", "cifar10_cvae"]:
+            nll = kl_divergence_loss(mu, logvar) + reconstruction_loss(x_generated, imgs)
+        else:
+            nll, nll_mse, nll_kld = VAE_LL_loss(imgs, x_generated, logvar, mu)
 
-        causalEffect, ceDebug = joint_uncond(self.config, self.decoder, self.classifier, self.device)
+        causalEffect = 0
+        if self.config['use_causal']:
+            causalEffect, ceDebug = joint_uncond(self.config, self.decoder, self.classifier, self.device)
+            nll = self.config['lam_ml'] * nll
 
-        loss = self.config['use_causal'] * causalEffect + self.config['lam_ml'] * nll
+        loss = causalEffect + nll
 
         return loss, causalEffect, nll
 
     @torch.no_grad()
     def sample(self, x_val):
+
         latentsweep_vals = [-3., -2., -1., 0., 1., 2., 3.]
         samples = []
         labels = []
