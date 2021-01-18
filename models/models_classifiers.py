@@ -2,6 +2,20 @@ import torch.nn as nn
 import torch
 
 
+class BiggestDummy(nn.Module):
+    def __init__(self):
+        super(BiggestDummy, self).__init__()
+        # self.batch_out = torch.zeroes
+
+    def forward(self, x):
+        # WIP
+        indices = x[:, :, 0, 0].round().long()
+        out = torch.zeros([x.shape[0], 2]).to("cuda:0" if torch.cuda.is_available() else "cpu")
+        out[torch.arange(out.size(0)).unsqueeze(1), indices] = 1
+
+        return out, out
+
+
 class MNIST_CNN(nn.Module):
 
     def __init__(self, output_dim):

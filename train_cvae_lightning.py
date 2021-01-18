@@ -54,7 +54,8 @@ def train_cvae_pl(config):
 
     # Select and load the classifier
     classifier = select_classifier(config)
-    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
+    if config["classifier"] != "mnist_dummy":
+        classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
 
     # Select the encoder, decoder and optimizer
     encoder, decoder = select_vae_model(config)
@@ -87,6 +88,7 @@ def train_cvae_pl(config):
     # Training
     # gen_callback.sample_and_save(trainer, model, epoch=0)  # Initial sample
     trainer.fit(model, train_loader, val_loader)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

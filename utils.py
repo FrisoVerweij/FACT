@@ -18,7 +18,10 @@ def select_dataloader(config):
         mnist_digits = config["mnist_digits"]
 
     if config["dataset"] == "mnist":
-        return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
+        if config["classifier"] == "mnist_dummy":
+            return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits, dummy=True)
+        else:
+            return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
 
     elif config["dataset"] == "mnist_overfit":
         return dataset.get_mnist_overfit_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
@@ -52,7 +55,8 @@ def select_classifier(config):
 
     elif config["classifier"] == 'cifar10_cnn':
         return models_classifiers.CIFAR10_CNN(output_dim)
-
+    elif config["classifier"] == 'mnist_dummy':
+        return models_classifiers.BiggestDummy()
     else:
         raise Exception("No valid model selected!")
 
