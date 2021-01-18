@@ -6,13 +6,13 @@ general:
   num_workers: 0
   log_dir: "CVAE_logs"
   progress_bar: True
-  n_samples_each_class: 3
+  n_samples_each_class: 4
 dataset:
-  dataset: "mnist"
+  dataset: "fmnist"
   mnist_digits: [3,8]
 classifier:
-  classifier: "mnist_cnn"
-  model_name: "mnist_3_8"
+  classifier: "fmnist_cnn"
+  model_name: "3_8"
   epochs: 20
   batch_size: 64
   lr: 0.1
@@ -20,8 +20,8 @@ classifier:
   optimizer: "SGD"
   no_print: True
 vae:
-  vae_model: "mnist_cvae"
-  model_name: "mnist_3_8"
+  vae_model: "fmnist_cvae"
+  model_name: "3_8"
   use_causal: True
   n_alpha: 1
   n_beta: 7
@@ -35,7 +35,7 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 30
+  epochs: 1
 
 
 

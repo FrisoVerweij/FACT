@@ -11,8 +11,8 @@ dataset:
   dataset: "mnist"
   mnist_digits: [3,8]
 classifier:
-  classifier: "mnist_cnn"
-  model_name: "mnist_3_8"
+  classifier: "mnist_dummy"
+  model_name: "mnist_dummy"
   epochs: 20
   batch_size: 64
   lr: 0.1
@@ -21,13 +21,13 @@ classifier:
   no_print: True
 vae:
   vae_model: "mnist_cvae"
-  model_name: "mnist_3_8"
+  model_name: "mnist_dummy"
   use_causal: True
   n_alpha: 1
   n_beta: 7
   alpha_samples: 100
   beta_samples: 25
-  lam_ml: 0.05
+  lam_ml: 0.025
   batch_size: 64
   lr: 0.0005
   b1: 0.5
@@ -35,7 +35,7 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 30
+  epochs: 50
 
 
 

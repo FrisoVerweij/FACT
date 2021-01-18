@@ -2,37 +2,76 @@ import argparse
 import os
 
 import yaml
-from torchvision.utils import make_grid, save_image
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-
 from callbacks.generators import GenerateCallbackDigit, GenerateCallbackLatent
-from dataset import get_mnist_dataloaders
-from models.models_pl import CVAE
 
+import numpy as np
+import torch
+
+from models.models_pl import Generic_model
 from utils import *
 
+
+def get_x_vals(val_loader, n_classes=2, n_for_each_class=4):
+    ###
+
+    # Here we get a sufficient number of samples to get the images from
+    data, targets = next(iter(val_loader))
+    for x, y in val_loader:
+        data = torch.cat([data, x], dim=0)
+        targets = torch.cat([targets, y], dim=0)
+
+        # Here we make sure that we have all the classes and that we have enough samples
+        if len(torch.unique(targets)) >= n_classes:
+            y_val = targets.numpy()
+            indices = []
+            for i in range(n_classes):
+                indices += list(np.where(y_val == i)[0])[:n_for_each_class]
+
+            if indices == n_classes*n_for_each_class:
+                break
+
+    indices = torch.tensor(indices)
+    x_val = torch.index_select(data, 0, indices)
+
+    return x_val
 
 
 def train_cvae_pl(config):
     """
     Function for training and testing a VAE model.
     Inputs:
-        args - Namespace object from the argument parser
+       config:
+
     """
+    config = prepare_variables_pl(config)
     pl.seed_everything(config["seed"])  # To be reproducible
-
     os.makedirs(config['log_dir'], exist_ok=True)
-    train_loader, val_loader = get_mnist_dataloaders(digits_to_include=config['mnist_digits'])
 
-    ### Get the pictures
-    data, targets = next(iter(val_loader))
-    y_val = targets.numpy()
-    x_val = data
+    # Select the data
+    train_loader, val_loader = select_dataloader(config)
+
+    # Select and load the classifier
+    classifier = select_classifier(config)
+    if config["classifier"] != "mnist_dummy":
+        classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
+
+    # Select the encoder, decoder and optimizer
+    encoder, decoder = select_vae_model(config)
+    optimizer = select_optimizer(config, encoder, decoder)
+
+    # What does this do? Is it just for the callbacks (also the n_samples_total below?)
+    x_val = get_x_vals(val_loader, n_classes=config['number_of_classes'],
+                       n_for_each_class=config['n_samples_each_class'])
+
+    n_samples_total = config['number_of_classes'] * config['n_samples_each_class']
+
+    number_of_latents = config['n_alpha'] + config['n_beta']
 
     # Create a PyTorch Lightning trainer with the generation callback
-    gen_callback_digit = GenerateCallbackDigit(x_val, every_n_epochs=1, save_to_disk=True)
-    gen_callback_latent = GenerateCallbackLatent(x_val, every_n_epochs=1, save_to_disk=True)
+    gen_callback_digit = GenerateCallbackDigit(x_val, dataset=config['dataset'], every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True)
+    gen_callback_latent = GenerateCallbackLatent(x_val,  dataset=config['dataset'], every_n_epochs=1, latent_dimensions=number_of_latents, n_samples=n_samples_total, save_to_disk=True)
 
     trainer = pl.Trainer(default_root_dir=config["log_dir"],
                          checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
@@ -44,8 +83,7 @@ def train_cvae_pl(config):
     trainer.logger._default_hp_metric = None  # Optional logging argument that we don't need
 
     # Create model
-
-    model = CVAE(z_dim, config['channel_dimension'], x_dim, classifier, config, device=device)
+    model = Generic_model(config, encoder, decoder, classifier, optimizer).to(config['device'])
 
     # Training
     # gen_callback.sample_and_save(trainer, model, epoch=0)  # Initial sample
@@ -56,34 +94,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='config/mnist_3_8.yml')
 
-
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))
     config = to_vae_config(config)
-    # The device to run the model on
-    device = config['device']
-    z_dim = config['n_alpha'] + config['n_beta']
-    x_dim = config['image_size'] ** 2
-    image_size = config['image_size']
-    classifier = select_classifier(config)
-    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier']))
-    classifier.to(device)
-
-    if config['mnist_digits'] == None:
-        n_classes = 10
-    else:
-        n_classes = len(config['mnist_digits'])
-
-    params = {
-        "number_of_classes": n_classes,
-        "alpha_samples": config['alpha_samples'],
-        "beta_samples": config['beta_samples'],
-        "z_dim": z_dim,
-        "n_alpha": config['n_alpha'],
-        "n_beta": config['n_beta'],
-        "channel_dimension": 1,
-    }
-
-    config = {**config, **params}
+    print(config)
 
     train_cvae_pl(config)
