@@ -67,7 +67,10 @@ def train_cvae_pl(config):
 
     n_samples_total = config['number_of_classes'] * config['n_samples_each_class']
 
-    number_of_latents = config['n_alpha'] + config['n_beta']
+    if config['max_print'] is not None:
+        number_of_latents = config['max_print']
+    else:
+        number_of_latents = config['n_alpha'] + config['n_beta']
 
     # Create a PyTorch Lightning trainer with the generation callback
     gen_callback_digit = GenerateCallbackDigit(x_val, dataset=config['dataset'], every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True)

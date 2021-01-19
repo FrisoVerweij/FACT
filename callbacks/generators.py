@@ -102,7 +102,7 @@ class GenerateCallbackLatent(pl.Callback):
             results.append(samples)
 
         ### Loop over the latent dimensions
-        for i in range(self.latent_dimensions if self.latent_dimensions <= 8 else 8):
+        for i in range(self.latent_dimensions):
 
             latent_dim_samples = []
             start_index = 7 * i
