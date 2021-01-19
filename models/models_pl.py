@@ -26,6 +26,7 @@ class Generic_model(pl.LightningModule):
         else:
             nll, nll_mse, nll_kld = VAE_LL_loss(imgs, x_generated, logvar, mu)
 
+        causalEffect = 0
         if self.config['use_causal']:
             causalEffect, ceDebug = joint_uncond(self.config, self.decoder, self.classifier, self.device)
             loss = self.config['lam_ml'] * nll + causalEffect

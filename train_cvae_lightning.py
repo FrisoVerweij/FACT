@@ -73,8 +73,10 @@ def train_cvae_pl(config):
         number_of_latents = config['n_alpha'] + config['n_beta']
 
     # Create a PyTorch Lightning trainer with the generation callback
-    gen_callback_digit = GenerateCallbackDigit(x_val, dataset=config['dataset'], every_n_epochs=1, n_samples=n_samples_total, save_to_disk=True)
-    gen_callback_latent = GenerateCallbackLatent(x_val,  dataset=config['dataset'], every_n_epochs=1, latent_dimensions=number_of_latents, n_samples=n_samples_total, save_to_disk=True)
+    gen_callback_digit = GenerateCallbackDigit(x_val, dataset=config['dataset'], every_n_epochs=config['callback_every'],
+                                               n_samples=n_samples_total, save_to_disk=True)
+    gen_callback_latent = GenerateCallbackLatent(x_val,  dataset=config['dataset'], every_n_epochs=config['callback_every'],
+                                                 latent_dimensions=number_of_latents, n_samples=n_samples_total, save_to_disk=True)
 
     trainer = pl.Trainer(default_root_dir=config["log_dir"],
                          checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
