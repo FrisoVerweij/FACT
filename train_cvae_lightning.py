@@ -67,8 +67,8 @@ def train_cvae_pl(config):
 
     n_samples_total = config['number_of_classes'] * config['n_samples_each_class']
 
-    if config['max_print'] is not None:
-        number_of_latents = config['max_print']
+    if config['max_images'] is not None:
+        number_of_latents = config['max_images']
     else:
         number_of_latents = config['n_alpha'] + config['n_beta']
 
