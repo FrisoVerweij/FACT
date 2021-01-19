@@ -89,6 +89,9 @@ def select_vae_model(config):
     elif config["vae_model"] == "cifar10_cvae_sasha":
         encoder = models_vae.Encoder_cifar10_sasha(config['z_dim'], 3, config["image_size"])  # note that here we do not square the image size
         decoder = models_vae.Decoder_cifar10_sasha(config['z_dim'], 3, config["image_size"])
+    elif config["vae_model"] == "cifar10_cvae_captain":
+        encoder = models_vae.Encoder_captain(config['z_dim'], 3, config["image_size"], config["image_size"], config["device"])
+        decoder = models_vae.Decoder_captain(config['z_dim'], 3, config["image_size"], config["image_size"], config["device"])
     else:
         raise Exception("No valid encoder/decoder selected!")
 
