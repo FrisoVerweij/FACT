@@ -1,19 +1,23 @@
+from abc import ABC
+
 import torch.nn as nn
 import torch
 
 
-class BiggestDummy(nn.Module):
+class DummyClassifier(nn.Module):
     def __init__(self):
-        super(BiggestDummy, self).__init__()
-        # self.batch_out = torch.zeroes
+        super(DummyClassifier, self).__init__()
+        self.dummyLayer = nn.Linear(1, 2)
 
     def forward(self, x):
-        # WIP
-        indices = x[:, :, 0, 0].round().long()
-        out = torch.zeros([x.shape[0], 2]).to("cuda:0" if torch.cuda.is_available() else "cpu")
-        out[torch.arange(out.size(0)).unsqueeze(1), indices] = 1
+        x = torch.mean(x, dim=-1)
+        x = torch.mean(x, dim=-1)
+        x = torch.mean(x, dim=-1)
 
-        return out, out
+        x = torch.reshape(x, (x.shape[0], 1))
+        out = self.dummyLayer(x)
+        out_probs = torch.softmax(out, dim=-1)
+        return out, out_probs
 
 
 class MNIST_CNN(nn.Module):

@@ -53,7 +53,7 @@ class GenerateCallbackDigit(pl.Callback):
 
         # Now we actually loop over our latents
         for i in range(self.n_samples):
-            samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
+            samples, y, _ = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
 
             samples = add_border_to_samples(samples, y, border_size=self.border_size, to_rgb=self.to_rgb)
 
@@ -108,21 +108,22 @@ class GenerateCallbackLatent(pl.Callback):
         """
         results = []
         for i in range(self.n_samples):
-            samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
+            samples, y, sweep_length = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
             samples = add_border_to_samples(samples, y, border_size=self.border_size, to_rgb=self.to_rgb)
             results.append(samples)
+
 
         ### Loop over the latent dimensions
         for i in range(self.latent_dimensions):
 
             latent_dim_samples = []
-            start_index = 7 * i
-            end_index = start_index + 7
+            start_index = sweep_length * i
+            end_index = start_index + sweep_length
 
             for samples in results:
                 latent_dim_samples += samples[start_index: end_index]
 
-            grid = make_grid(latent_dim_samples, nrow=7)
+            grid = make_grid(latent_dim_samples, nrow=sweep_length)
             name = 'latent_samples_{}_{}'.format(i, epoch)
             logger = trainer.logger.experiment
             logger.add_image('latent_sample_{}'.format(i), grid, epoch)
