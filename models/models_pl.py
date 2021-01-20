@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 from utils import *
 
+
 class Generic_model(pl.LightningModule):
 
     def __init__(self, config, encoder, decoder, classifier, optimizer):
@@ -20,6 +21,7 @@ class Generic_model(pl.LightningModule):
 
         x_generated = self.decoder(latent_out)
 
+        causalEffect = 0
         # This loss seemed to work out a lot better for cifar10 for both of the models that we implemented
         if self.config["vae_model"] in ["cifar10_cvae_sasha", "cifar10_cvae"]:
             nll = kl_divergence_loss(mu, logvar) + reconstruction_loss(x_generated, imgs)
