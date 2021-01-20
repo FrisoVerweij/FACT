@@ -55,7 +55,12 @@ def train_cvae_pl(config):
     # Select and load the classifier
     classifier = select_classifier(config)
     if config["classifier"] != "mnist_dummy":
-        classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
+
+        if config["model_name"][-3:] == ".pt":
+            classifier.load_state_dict(
+                torch.load(config['save_dir']  + config['model_name'])['model_state_dict_classifier'])
+        else:
+            classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
 
     # Select the encoder, decoder and optimizer
     encoder, decoder = select_vae_model(config)

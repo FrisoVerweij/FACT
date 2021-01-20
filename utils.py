@@ -1,7 +1,7 @@
 import dataset
 import torch.nn as nn
 import torch
-from models import models_classifiers, models_vae
+from models import models_classifiers, models_vae, CNN_classifier_author
 import numpy as np
 
 def select_dataloader(config):
@@ -48,7 +48,13 @@ def select_classifier(config):
         output_dim = len(config["mnist_digits"])
 
     if config["classifier"] in ['mnist_cnn', 'fmnist_cnn']:
-        return models_classifiers.MNIST_CNN(output_dim)
+        if config["model_name"][-3:] == ".pt":
+            print("load .pt")
+
+
+            return CNN_classifier_author.CNN(output_dim)
+        else:
+            return models_classifiers.MNIST_CNN(output_dim)
 
     elif config["classifier"] == 'mnist_cnn_overfit':
         return models_classifiers.MNIST_CNN_Overfit(output_dim)
