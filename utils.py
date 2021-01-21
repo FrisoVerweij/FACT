@@ -2,7 +2,7 @@ import dataset
 import torch.nn as nn
 import torch
 
-from models import mobilenetv2
+from models import vgg
 from models import models_classifiers, models_vae, CNN_classifier_author
 import numpy as np
 
@@ -21,16 +21,7 @@ def select_dataloader(config):
         mnist_digits = config["mnist_digits"]
 
     if config["dataset"] == "mnist":
-
-        if config["classifier"] == "mnist_dummy":
-            return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits,
-                                                 dummy=True)
-        else:
-            return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
-
-
-    elif config["dataset"] == "mnist_overfit":
-        return dataset.get_mnist_overfit_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
+        return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
 
     elif config["dataset"] == "fmnist":
         return dataset.get_fmnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
@@ -62,18 +53,12 @@ def select_classifier(config):
         else:
             return models_classifiers.MNIST_CNN(output_dim)
 
-    elif config["classifier"] == 'mnist_cnn_overfit':
-        return models_classifiers.MNIST_CNN_Overfit(output_dim)
-
     elif config["classifier"] == 'cifar10_cnn':
         return models_classifiers.CIFAR10_CNN(output_dim)
 
-    elif config["classifier"] == 'mnist_dummy':
-        return models_classifiers.BiggestDummy()
-
-    elif config["classifier"] == 'mobilenet_v2':
-        mobilenet = mobilenetv2.mobilenet_v2(pretrained=True, num_classes=output_dim)
-        return mobilenet
+    elif config["classifier"] == 'vgg_11':
+        vgg_11 = vgg.vgg11_bn(pretrained=True, num_classes=output_dim, device=config['device'])
+        return vgg_11
 
     elif config['classifier'] == 'dummy':
         return models_classifiers.DummyClassifier()
@@ -120,7 +105,6 @@ def select_vae_model(config):
     elif config["vae_model"] == "cifar10_cvae_own":
         encoder = models_vae.Encoder_own_model(config['z_dim'], 3, config["image_size"] ** 2)
         decoder = models_vae.Decoder_own_model(config['z_dim'], 3, config["image_size"] ** 2)
- 
     else:
         raise Exception("No valid encoder/decoder selected!")
 
@@ -134,6 +118,21 @@ def weights_init_normal(m):
     elif classname.find('linear') != -1:
         torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
         torch.nn.init.constant_(m.bias.data, 0.0)
+
+def weights_init_kaiming(model):
+    classname = model.__class__.__name__
+    # weight initialization
+    for m in model.modules():
+        if isinstance(m, nn.Conv2d):
+            nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.BatchNorm2d):
+            nn.init.constant_(m.weight, 1)
+            nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.Linear):
+            nn.init.normal_(m.weight, 0, 0.01)
+            nn.init.constant_(m.bias, 0)
 
 
 def prepare_variables_pl(config):

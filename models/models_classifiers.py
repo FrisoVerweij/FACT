@@ -51,32 +51,7 @@ class MNIST_CNN(nn.Module):
         out = self.all_modules(x)
         out_probs = torch.softmax(out, dim=-1)
         return out, out_probs
-
-
-class MNIST_CNN_Overfit(nn.Module):
-    def __init__(self, output_dim):
-        super(MNIST_CNN_Overfit, self).__init__()
-        self.all_modules = nn.Sequential(
-            nn.Conv2d(1, 32, 3, 1),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, 3, 1),
-            nn.ReLU(),
-            nn.Flatten(1),
-            nn.Linear(9216 * 4, 2048),
-            nn.ReLU(),
-            nn.Linear(2048, output_dim)
-        )
-
-    def forward(self, x):
-        '''
-        Calculates the output of the model given the input
-        :param x: input for the model
-        :return: torch.tensor: self.all_modules(x)
-        '''
-        out = self.all_modules(x)
-        out_probs = torch.softmax(out, dim=-1)
-        return out, out_probs
-
+        
 
 class CIFAR10_CNN(nn.Module):
 
