@@ -40,11 +40,7 @@ def train(config, seed):
             targets = targets.to(device)
 
             # Calculate model output and loss
-            if not config["classifier"] in ["mobilenet_v2"]:
-                predictions, prediction_probabilities = model(inputs)
-            else:
-                predictions = model(inputs)
-                prediction_probabilities = torch.softmax(predictions, dim=-1)
+            predictions, prediction_probabilities = model(inputs)
 
             loss = loss_module(predictions, targets)
 
@@ -73,11 +69,7 @@ def train(config, seed):
                 inputs = inputs.to(device)
                 targets = targets.to(device)
 
-                if not config["classifier"] in ["mobilenet_v2"]:
-                    _, prediction_probabilities = model(inputs)
-                else:
-                    predictions = model(inputs)
-                    prediction_probabilities = torch.softmax(predictions, dim=-1)
+                _, prediction_probabilities = model(inputs)
 
                 predictions = torch.argmax(prediction_probabilities, dim=-1)
                 total_comparisons += len(targets)

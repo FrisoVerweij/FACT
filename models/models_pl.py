@@ -58,7 +58,9 @@ class Generic_model(pl.LightningModule):
                 z_new = z.copy()
                 z_new[latent_dim] += latent_val
                 x_generated = self.decoder(torch.unsqueeze(torch.from_numpy(z_new), 0).to(self.device))
+
                 y, y_probs = self.classifier(x_generated)
+
                 y = torch.argmax(y_probs, dim=-1)
 
                 labels.append(y)
@@ -66,7 +68,7 @@ class Generic_model(pl.LightningModule):
 
         self.encoder.train() # make sure to set it back to training
         self.decoder.train()
-        return samples, labels
+        return samples, labels, len(latentsweep_vals)
 
     def configure_optimizers(self):
         # Create optimizer
