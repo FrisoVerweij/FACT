@@ -78,12 +78,14 @@ def train_cvae_pl(config):
     gen_callback_latent = GenerateCallbackLatent(x_val,  dataset=config['dataset'], every_n_epochs=config['callback_every'],
                                                  latent_dimensions=number_of_latents, n_samples=n_samples_total, save_to_disk=True)
 
+    callbacks = [gen_callback_digit, gen_callback_latent] if config['callback_digits'] else [gen_callback_latent]
+
     trainer = pl.Trainer(default_root_dir=config["log_dir"],
                          checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
                          gpus=1 if torch.cuda.is_available() else 0,
                          max_epochs=config['epochs'],
                          log_every_n_steps=1,
-                         callbacks=[gen_callback_digit, gen_callback_latent],
+                         callbacks=callbacks,
                          progress_bar_refresh_rate=1 if config["progress_bar"] else 0)
     trainer.logger._default_hp_metric = None  # Optional logging argument that we don't need
 

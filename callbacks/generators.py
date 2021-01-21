@@ -42,15 +42,6 @@ class GenerateCallbackDigit(pl.Callback):
             epoch - The epoch number to use for TensorBoard logging and saving of the files.
         """
 
-        #  This is to simply show the images as they are
-        latent, mu, logvar = pl_module.encoder(self.to_sample_from.to('cuda' if torch.cuda.is_available() else 'cpu'))
-        imgs = pl_module.decoder(latent)
-        imgs = make_grid(imgs)
-        save_image(imgs, trainer.logger.log_dir + "/" + "example_images.png")
-
-        orgiginal_imgs = make_grid(self.to_sample_from)
-        save_image(orgiginal_imgs, trainer.logger.log_dir + "/" + "original_images.png")
-
         # Now we actually loop over our latents
         for i in range(self.n_samples):
             samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
@@ -106,6 +97,16 @@ class GenerateCallbackLatent(pl.Callback):
             pl_module - The VAE model that is currently being trained.
             epoch - The epoch number to use for TensorBoard logging and saving of the files.
         """
+
+        #  This is to simply show the images as they are
+        latent, mu, logvar = pl_module.encoder(self.to_sample_from.to('cuda' if torch.cuda.is_available() else 'cpu'))
+        imgs = pl_module.decoder(latent)
+        imgs = make_grid(imgs)
+        save_image(imgs, trainer.logger.log_dir + "/" + "example_images.png")
+
+        orgiginal_imgs = make_grid(self.to_sample_from)
+        save_image(orgiginal_imgs, trainer.logger.log_dir + "/" + "original_images.png")
+
         results = []
         for i in range(self.n_samples):
             samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
