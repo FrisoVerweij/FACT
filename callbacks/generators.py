@@ -106,23 +106,15 @@ class GenerateCallbackLatent(pl.Callback):
             pl_module - The VAE model that is currently being trained.
             epoch - The epoch number to use for TensorBoard logging and saving of the files.
         """
-        results = []
-        for i in range(self.n_samples):
-            samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
-            samples = add_border_to_samples(samples, y, border_size=self.border_size, to_rgb=self.to_rgb)
-            results.append(samples)
 
+        results = create_samples(self.to_sample_from, pl_module, border_size=self.border_size, to_rgb=self.to_rgb, )
+        grids = create_latent_grids(results, self.latent_dimensions)
         ### Loop over the latent dimensions
-        for i in range(self.latent_dimensions):
+        for i, grid in enumerate(grids):
 
             latent_dim_samples = []
             start_index = 7 * i
             end_index = start_index + 7
-
-            for samples in results:
-                latent_dim_samples += samples[start_index: end_index]
-
-            grid = make_grid(latent_dim_samples, nrow=7)
             name = 'latent_samples_{}_{}'.format(i, epoch)
             logger = trainer.logger.experiment
             logger.add_image('latent_sample_{}'.format(i), grid, epoch)
@@ -189,3 +181,29 @@ def combine_border_and_sample(sample, border, border_size=5):
     result += border
     result[:, border_size:-border_size, border_size: -border_size] = sample
     return result
+
+
+def create_samples(to_sample_from, model, to_rgb=True, border_size=5, ):
+    results = []
+    for i in range(len(to_sample_from)):
+        samples, y = model.sample(to_sample_from[i].unsqueeze(0))
+        samples = add_border_to_samples(samples, y, to_rgb=to_rgb, border_size=border_size, )
+        results.append(samples)
+    return results
+
+
+def create_latent_grids(results, latent_dimensions, ):
+    grids = []
+    ### Loop over the latent dimensions
+    for i in range(latent_dimensions):
+
+        latent_dim_samples = []
+        start_index = 7 * i
+        end_index = start_index + 7
+
+        for samples in results:
+            latent_dim_samples += samples[start_index: end_index]
+
+        grid = make_grid(latent_dim_samples, nrow=7)
+        grids.append(grid)
+    return grids
