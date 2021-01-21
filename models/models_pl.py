@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 from utils import *
 
+
 class Generic_model(pl.LightningModule):
 
     def __init__(self, config, encoder, decoder, classifier, optimizer):
@@ -12,6 +13,8 @@ class Generic_model(pl.LightningModule):
         self.optimizer = optimizer
         self.config = config
 
+        self.sweep_length = int(6 / self.config['sweeping_stepsize']) + 1
+
         self.save_hyperparameters()
 
     def forward(self, imgs):
@@ -20,6 +23,7 @@ class Generic_model(pl.LightningModule):
 
         x_generated = self.decoder(latent_out)
 
+        causalEffect = 0
         # This loss seemed to work out a lot better for cifar10 for both of the models that we implemented
         if self.config["vae_model"] in ["cifar10_cvae_sasha", "cifar10_cvae", "cifar10_cvae_own"]:
             nll = kl_divergence_loss(mu, logvar) + reconstruction_loss(x_generated, imgs)
@@ -40,7 +44,8 @@ class Generic_model(pl.LightningModule):
         self.encoder.eval() # if we do not do this it raises issues for batch normalization
         self.decoder.eval()
 
-        latentsweep_vals = [-3., -2., -1., 0., 1., 2., 3.]
+        #latentsweep_vals = [-3., -2., -1., 0., 1., 2., 3.]
+        latentsweep_vals = np.arange(-3, 3 + self.config['sweeping_stepsize'], self.config['sweeping_stepsize']).tolist()
         samples = []
         labels = []
         x_val = x_val.to(self.device)
@@ -54,8 +59,7 @@ class Generic_model(pl.LightningModule):
                 z_new[latent_dim] += latent_val
                 x_generated = self.decoder(torch.unsqueeze(torch.from_numpy(z_new), 0).to(self.device))
                 y, y_probs = self.classifier(x_generated)
-
-                y = torch.argmax(y_probs, dim=1)
+                y = torch.argmax(y_probs, dim=-1)
 
                 labels.append(y)
                 samples.append(x_generated.squeeze(0))

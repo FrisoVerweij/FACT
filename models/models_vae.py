@@ -37,6 +37,7 @@ class Encoder(nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
+
 class Decoder(nn.Module):
 
     def __init__(self, z_dim, channel_dimenion, x_dim,  # x_dim : total number of pixels
@@ -109,6 +110,7 @@ class Encoder_cifar10(nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
+
 class Decoder_cifar10(nn.Module):
 
     def __init__(self, z_dim, channel_dimenion, x_dim,  # x_dim : total number of pixels
@@ -147,8 +149,8 @@ class Encoder_cifar10_sasha(nn.Module):
         self.z_dim = z_dim
 
         self.model = nn.Sequential(
-            nn.Conv2d(channel_dimension, filt_per_layer//4 ,kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(filt_per_layer//4),
+            nn.Conv2d(channel_dimension, filt_per_layer // 4, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(filt_per_layer // 4),
             nn.ReLU(),
             nn.Conv2d(filt_per_layer // 4, filt_per_layer // 2, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(filt_per_layer // 2),
@@ -179,6 +181,7 @@ class Encoder_cifar10_sasha(nn.Module):
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
+
 
 class Decoder_cifar10_sasha(nn.Module):
 
@@ -226,8 +229,10 @@ class Conv_Block(nn.Module):
             nn.BatchNorm2d(output),
             nn.ReLU(True),
         )
+
     def forward(self, imgs):
         return self.block(imgs)
+
 
 class Conv_Block_Transpose(nn.Module):
     def __init__(self, input, output, kernel, stride, padding, bias):
@@ -237,6 +242,7 @@ class Conv_Block_Transpose(nn.Module):
             nn.BatchNorm2d(output),
             nn.ReLU(True),
         )
+
     def forward(self, imgs):
         return self.block(imgs)
 
@@ -258,6 +264,7 @@ class Encoder_own_model(nn.Module):
             nn.Conv2d(filt_per_layer, filt_per_layer, 4, stride=1, padding=0),
             nn.ReLU(),
         )"""
+        
         self.model = nn.Sequential(
             nn.Conv2d(channel_dimension, filt_per_layer, kernel_size=3, padding=1, stride=2),  # 32x32 => 16x16
             nn.ReLU(),
@@ -440,6 +447,7 @@ class Encoder_captain(nn.Module):
         z = self.reparametrize(mu, logvar)
         return z, mu, logvar
 
+
 class Decoder_captain(nn.Module):
     def __init__(self, latent_variable_size, nc, ngf, ndf, is_cuda=False):
         super(Decoder_captain, self).__init__()
@@ -489,5 +497,3 @@ class Decoder_captain(nn.Module):
     def forward(self, z):
         res = self.decode(z)
         return res
-
-

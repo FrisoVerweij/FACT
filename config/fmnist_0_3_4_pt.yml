@@ -1,4 +1,3 @@
-
 general:
   save_dir: "./pretrained_models_local/"
   device: "cuda"
@@ -7,39 +6,36 @@ general:
   log_dir: "CVAE_logs"
   progress_bar: True
   n_samples_each_class: 3
-  callback_every: 1
 dataset:
-  dataset: "mnist"
-  mnist_digits: [3,8]
+  dataset: "fmnist"
+  mnist_digits: [0, 3, 4]
 classifier:
-  classifier: "mnist_cnn"
-  model_name: "mnist_3_8"
-  epochs: 20
+  classifier: "fmnist_cnn"
+  model_name: "fmnist_model_034.pt"
+  epochs: 50
   batch_size: 64
   lr: 0.1
   momentum: 0.5
   optimizer: "SGD"
   no_print: True
 vae:
-  vae_model: "mnist_cvae"
-  model_name: "mnist_3_8"
+  vae_model: "fmnist_cvae"
+  model_name: "fmnist_model_034.pt"
   use_causal: True
-  n_alpha: 1
-  n_beta: 7
+  n_alpha: 2
+  n_beta: 4
   alpha_samples: 100
   beta_samples: 25
   lam_ml: 0.05
-  batch_size: 64
-  lr: 0.0005
+  batch_size: 32
+  lr: 0.0001
   b1: 0.5
   b2: 0.999
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 30
+  epochs: 30 # 8000 / 657 Want to train for 80000 steps
   max_images: null
-  sweeping_stepsize: 1
-
 
 
 
