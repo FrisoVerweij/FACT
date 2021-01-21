@@ -21,16 +21,7 @@ def select_dataloader(config):
         mnist_digits = config["mnist_digits"]
 
     if config["dataset"] == "mnist":
-
-        if config["classifier"] == "mnist_dummy":
-            return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits,
-                                                 dummy=True)
-        else:
-            return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
-
-
-    elif config["dataset"] == "mnist_overfit":
-        return dataset.get_mnist_overfit_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
+        return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
 
     elif config["dataset"] == "fmnist":
         return dataset.get_fmnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
@@ -62,14 +53,8 @@ def select_classifier(config):
         else:
             return models_classifiers.MNIST_CNN(output_dim)
 
-    elif config["classifier"] == 'mnist_cnn_overfit':
-        return models_classifiers.MNIST_CNN_Overfit(output_dim)
-
     elif config["classifier"] == 'cifar10_cnn':
         return models_classifiers.CIFAR10_CNN(output_dim)
-
-    elif config["classifier"] == 'mnist_dummy':
-        return models_classifiers.BiggestDummy()  # shouldn't this be dummyclassifier?
 
     elif config["classifier"] == 'vgg_11':
         vgg_11 = vgg.vgg11_bn(pretrained=True, num_classes=output_dim, device=config['device'])

@@ -3,21 +3,68 @@ Paper reproduction
 ## Requirements
 - Numpy
 - PyTorch
+- PyTorch Lightning
 
 ## How to use
-###classifier_trainloop.py###
-####Interface####
-To create and train a classification model, call the *classifier_trainloop.py* file using the commandline using the hyperparameters provided below.
-After training, the model is saved in the folder models/
 
-####Hyperparameters####
-Specify the following parameters when running from commandline:
-- model: default: mnist_cnn, choices: mnist_cnn
-- epochs: default: 50
-- batch_size: default: 64
-- lr: default: 0.1
-- momentum: default: 0.5
-- optimizer: default: SGD, choices: SGD, Adam
-- device: cuda if available, cpu otherwise
-- dataset: default: mnist, choices: mnist
-- mnist_digits: default: None	E.g. --mnist_digits=3,8
+### Creating a classifier
+To create a classifier, run the file train_classifier.py and specify a config file.
+The config file contains all necessary information to run an experiment.
+
+### Creating a generative model
+To create a generative model, run the file train_cvae_lightning.py and specify a config file.
+This config file should be the same as the config file used to create the classifier.
+
+### Config
+The config file specifies all necessary information to run an experiment.
+For example, it specifies which models are used and how long the training process is.
+All hyperparameters are explained below:
+
+#### Hyperparameters
+The following hyperparameters general parameters:
+- save_dir:             Directory where to save and load the models
+- device:               Either 'cpu' or 'gpu'
+- seed:                 Seed for reproducibility.
+- num_workers:          Number of workers for the dataloader
+- log_dir:              Folder where to store the Tensorboard logs
+- progress_bar:         Indicate whether to show the progress when training with PyTorch Lightning
+- n_samples_each_class: Indicate how many samples are created for each class when displaying the sweeping of the latent variables
+
+The following hyperparameters specify the dataset:
+- dataset:              Specifies dataset used. Choices are 'mnist', 'fmnist', or 'cifar10'
+- mnist_digits:         Specifies which classes to include in the training process. Either '1,3,5...' or 'null' for all classes
+
+The following hyperparameters are used when training the classifier:
+- classifier:           Specifies model to train. Choices are 'mnist_cnn', 'cifar_cnn' or 'dummy'.
+- model_name:           Name of the saved classifier. Necessary for the generative model to find the classifier
+- epochs: 20            Number of epochs
+- batch_size:           Batch size
+- lr:                   Learning rate
+- momentum:             Momentum
+- optimizer:            Either 'SGD' or 'Adam'
+- no_print:             If True, only print 
+
+The following hyperparameters are used when training the generative model (vae):
+- vae_model:            Specifies model to train. Choices are 'mnist_cvae', 'fmnist_cvae' or 'cifar10_cvae'
+- model_name:           Name of the classifier model
+- use_causal:           If True, use the causal term to train the generative model. False otherwise
+- n_alpha:              Number of causal factors
+- n_beta:               Number of non-causal factors
+- alpha_samples:        Number of alpha samples used to approximate causal term
+- beta_samples:         Number of beta samples used to approximate causal term 
+- lam_ml:               Lambda term. Increase to decrease relative importance of the causal term
+- batch_size:           Batch size
+- lr:                   Learning rate
+- b1:                   Beta 1 (for Adam optimizer)
+- b2:                   Beta 2 (for Adam optimizer)
+- weight_decay:         Weight decay
+- optimizer:            Either 'SGD' or 'Adam'
+- image_size:           Size of the input images. 28 means 28x28
+- epochs:               Number of epochs
+- max_images:           Either an integer to limit the number of generated image, or 'null' to remove limit
+- sweeping_stepsize:    Increase or decrease to either make the generated images more coarse grained or fine grained
+
+
+
+
+
