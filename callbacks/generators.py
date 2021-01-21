@@ -109,17 +109,11 @@ class GenerateCallbackLatent(pl.Callback):
       
         sweep_length = pl_module.sweep_length
         results = create_samples(self.to_sample_from, pl_module, border_size=self.border_size, to_rgb=self.to_rgb, )
-        grids = create_latent_grids(results, self.latent_dimensions, nrows=sweep_length)
+        grids = create_latent_grids(results, self.latent_dimensions, nrow=sweep_length)
 
         ### Loop over the latent dimensions
         for i, grid in enumerate(grids):
 
-            latent_dim_samples = []
-
-            start_index = sweep_length * i
-            end_index = start_index + sweep_length
-
-      
 
             name = 'latent_samples_{}_{}'.format(i, epoch)
             logger = trainer.logger.experiment
@@ -198,7 +192,7 @@ def create_samples(to_sample_from, model, to_rgb=True, border_size=5, ):
     return results
 
 
-def create_latent_grids(results, latent_dimensions, ):
+def create_latent_grids(results, latent_dimensions, nrow=7):
     grids = []
     ### Loop over the latent dimensions
     for i in range(latent_dimensions):
@@ -210,6 +204,6 @@ def create_latent_grids(results, latent_dimensions, ):
         for samples in results:
             latent_dim_samples += samples[start_index: end_index]
 
-        grid = make_grid(latent_dim_samples, nrow=7)
+        grid = make_grid(latent_dim_samples, nrow=nrow)
         grids.append(grid)
     return grids

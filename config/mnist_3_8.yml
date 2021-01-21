@@ -7,6 +7,7 @@ general:
   log_dir: "CVAE_logs"
   progress_bar: True
   n_samples_each_class: 3
+  callback_every: 1
 dataset:
   dataset: "mnist"
   mnist_digits: [3,8]

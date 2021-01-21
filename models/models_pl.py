@@ -13,6 +13,8 @@ class Generic_model(pl.LightningModule):
         self.optimizer = optimizer
         self.config = config
 
+        self.sweep_length = int(6 / self.config['sweeping_stepsize']) + 1
+
         self.save_hyperparameters()
 
     def forward(self, imgs):
