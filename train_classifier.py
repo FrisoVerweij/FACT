@@ -88,7 +88,7 @@ def train(config, seed):
 if __name__ == "__main__":
     # Create parser to get hyperparameters from user
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8.yml')
+    parser.add_argument('--config', default='config/mnist_3_8_final.yml')
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, "r"))

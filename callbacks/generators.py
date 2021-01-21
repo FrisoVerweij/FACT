@@ -44,7 +44,7 @@ class GenerateCallbackDigit(pl.Callback):
 
         # Now we actually loop over our latents
         for i in range(self.n_samples):
-            samples, y, _ = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
+            samples, y = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
 
             samples = add_border_to_samples(samples, y, border_size=self.border_size, to_rgb=self.to_rgb)
 
@@ -186,7 +186,7 @@ def combine_border_and_sample(sample, border, border_size=5):
 def create_samples(to_sample_from, model, to_rgb=True, border_size=5, ):
     results = []
     for i in range(len(to_sample_from)):
-        samples, y, sweep_length = model.sample(to_sample_from[i].unsqueeze(0))
+        samples, y = model.sample(to_sample_from[i].unsqueeze(0))
         samples = add_border_to_samples(samples, y, to_rgb=to_rgb, border_size=border_size, )
         results.append(samples)
     return results

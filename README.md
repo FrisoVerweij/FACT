@@ -5,7 +5,19 @@ Paper reproduction
 - PyTorch
 - PyTorch Lightning
 
-## How to use
+
+
+#### Reproducing the experiments
+
+In general every experiment consists of 2 parts.
+1) Training the classifier this is done with `train_classifier.py`
+2) Training the explanation model `train_cvae_lightning.py`
+
+Both scripts have one argument that is used namely the `--config` argument. 
+In the directory `./config` you can find the config files for all the experiments
+
+There are some notable exceptions. For Fashionmnist 034 we used the pretrained classifier of the authors.
+This means that the classifier does not have to be trained in that case. 
 
 ### Creating a classifier
 To create a classifier, run the file train_classifier.py and specify a config file.
@@ -63,8 +75,4 @@ The following hyperparameters are used when training the generative model (vae):
 - epochs:               Number of epochs
 - max_images:           Either an integer to limit the number of generated image, or 'null' to remove limit
 - sweeping_stepsize:    Increase or decrease to either make the generated images more coarse grained or fine grained
-
-
-
-
 
