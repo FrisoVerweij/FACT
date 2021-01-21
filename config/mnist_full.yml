@@ -36,6 +36,8 @@ vae:
   optimizer: "Adam"
   image_size: 28
   epochs: 30
+  max_images: null
+  sweeping_stepsize: 1
 
 
 
