@@ -23,6 +23,8 @@ def train(config, seed):
 
     # Select model, optimizer, scheduler and loss function
     model = select_classifier(config).to(device)
+    #print(model)
+
     optimizer = select_optimizer(config, model)
     loss_module = nn.CrossEntropyLoss()
 
@@ -38,7 +40,12 @@ def train(config, seed):
             targets = targets.to(device)
 
             # Calculate model output and loss
-            predictions, prediction_probabilities = model(inputs)
+            if not config["classifier"] in ["mobilenet_v2"]:
+                predictions, prediction_probabilities = model(inputs)
+            else:
+                predictions = model(inputs)
+                prediction_probabilities = torch.softmax(predictions, dim=-1)
+
             loss = loss_module(predictions, targets)
 
             accuracyPredictions = torch.argmax(prediction_probabilities, dim=-1)
@@ -65,7 +72,13 @@ def train(config, seed):
             for inputs, targets in testdata_loader:
                 inputs = inputs.to(device)
                 targets = targets.to(device)
-                _, prediction_probabilities = model(inputs)
+
+                if not config["classifier"] in ["mobilenet_v2"]:
+                    _, prediction_probabilities = model(inputs)
+                else:
+                    predictions = model(inputs)
+                    prediction_probabilities = torch.softmax(predictions, dim=-1)
+
                 predictions = torch.argmax(prediction_probabilities, dim=-1)
                 total_comparisons += len(targets)
                 total_correct += (predictions == targets).sum().item()
@@ -74,6 +87,7 @@ def train(config, seed):
             print("[Test Epoch %d/%d] [test accuracy: %f, train accuracy: %f]" % (epoch + 1, config['epochs'], accuracy, train_accuracy/batch_count))
 
         train_accuracy = 0
+
     torch.save(model.state_dict(), config['save_dir'] + config['classifier'] + "_" + config['model_name'])
     return model
 

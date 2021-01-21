@@ -75,6 +75,7 @@ class Encoder_cifar10(nn.Module):
     def __init__(self, z_dim, channel_dimension, x_dim,
                  filt_per_layer=128):  # x_dim : total number of pixels
         super(Encoder_cifar10, self).__init__()
+        #  conv output width = (W_in - W_conv + 2*pad) / stride   + 1
         self.model = nn.Sequential(
             nn.Conv2d(int(channel_dimension), filt_per_layer, 4, stride=2, padding=1),
             nn.ReLU(),
@@ -85,8 +86,14 @@ class Encoder_cifar10(nn.Module):
             nn.ReLU(),
         )
         self.z_dim = z_dim
-        self.fc_mu = nn.Linear(int(filt_per_layer * x_dim / 16), z_dim)
-        self.fc_logvar = nn.Linear(int(filt_per_layer * x_dim / 16), z_dim)
+        self.fc_mu = nn.Sequential(
+            nn.Linear(int(filt_per_layer * x_dim / 16), 500),
+            nn.Linear(500, z_dim)
+        )
+        self.fc_logvar = nn.Sequential(
+            nn.Linear(int(filt_per_layer * x_dim / 16), 500),
+            nn.Linear(500, z_dim)
+        )
 
     def encode(self, x):
         z = self.model(x)
@@ -113,8 +120,8 @@ class Decoder_cifar10(nn.Module):
         self.c_dim = channel_dimenion
         self.x_dim = x_dim
         self.fc = nn.Sequential(
-            nn.Linear(z_dim, int(filt_per_layer * self.x_dim / 16)),
-            nn.ReLU()
+            nn.Linear(z_dim, 500),
+            nn.Linear(500, int(filt_per_layer * self.x_dim / 16))
         )
         self.model = nn.Sequential(
             nn.ConvTranspose2d(filt_per_layer, filt_per_layer, 4, stride=1, padding=1),
@@ -240,38 +247,64 @@ class Conv_Block_Transpose(nn.Module):
         return self.block(imgs)
 
 
-class Encoder_own(nn.Module):
-    def __init__(self, nz, nc, x_dim, ngf, ngpu=None):
-        super(Encoder_own, self).__init__()
-        # nz is the length of z
-        # ngf is the size of the feature maps
-        # nc is the number of channels
+class Encoder_own_model(nn.Module):
 
+    def __init__(self, z_dim, channel_dimension, x_dim,
+                 filt_per_layer=128):  # x_dim : total number of pixels
+        super(Encoder_own_model, self).__init__()
         #  conv output width = (W_in - W_conv + 2*pad) / stride   + 1
-        #  pytorch convolustions have arguments nn.Conv2d(input_c, output_c, kernel, stride, padding)
-        self.ngpu = ngpu
+        """self.model = nn.Sequential(
+            nn.Conv2d(int(channel_dimension), filt_per_layer, 4, stride=2, padding=1),
+            nn.ReLU(),
+
+            nn.Conv2d(filt_per_layer, filt_per_layer, 4, stride=2, padding=1),
+            nn.ReLU(),
+
+            nn.ZeroPad2d((1, 2, 1, 2)),
+            nn.Conv2d(filt_per_layer, filt_per_layer, 4, stride=1, padding=0),
+            nn.ReLU(),
+        )"""
+        
         self.model = nn.Sequential(
-            # input size = batch, 3, 32, 32
-            Conv_Block(nc, ngf, 3, 1, 1, bias=False),
-            Conv_Block(ngf, ngf * 2, 4, 1, 0, bias=False),
-            # output size = batch, ngf*2, 29, 29
-
-            Conv_Block(ngf * 2, ngf * 3, 3, 1, 1, bias=False),
-            Conv_Block(ngf * 3, ngf * 4, 4, 2, 1, bias=False),
-            # output size = batch, ngf*4, 14, 14
-
-            Conv_Block(ngf * 4, ngf * 5, 3, 1, 1, bias=False),
-            Conv_Block(ngf * 5, ngf * 6, 4, 2, 1, bias=False),
-            # output size = batch, ngf*6, 7, 7
-
-            Conv_Block(ngf * 6, ngf * 7, 3, 1, 1, bias=False),
-            Conv_Block(ngf * 7, ngf * 8, 4, 2, 1, bias=False),
-            # output size = batch, ngf*8, 3, 3
-
+            nn.Conv2d(channel_dimension, filt_per_layer, kernel_size=3, padding=1, stride=2),  # 32x32 => 16x16
+            nn.ReLU(),
+            nn.Conv2d(filt_per_layer, filt_per_layer, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(filt_per_layer, 2 * filt_per_layer, kernel_size=3, padding=1, stride=2),  # 16x16 => 8x8
+            nn.ReLU(),
+            nn.Conv2d(2 * filt_per_layer, 2 * filt_per_layer, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(2 * filt_per_layer, 2 * filt_per_layer, kernel_size=3, padding=1, stride=2),  # 8x8 => 4x4
+            nn.ReLU(),
+            #nn.Flatten(),  # Image grid to single feature vector
+            #nn.Linear(2 * 16 * filt_per_layer, z_dim)
         )
+        self.z_dim = z_dim
+        """self.fc_mu = nn.Sequential(
+            nn.Linear(int(filt_per_layer * x_dim / 16), 512),
+            nn.ReLU(),
+            nn.Linear(512, z_dim),
+        )
+        self.fc_logvar = nn.Sequential(
+            nn.Linear(int(filt_per_layer * x_dim / 16), 512),
+            nn.ReLU(),
+            nn.Linear(512, z_dim),
+        )"""
 
-        self.fc_mu = nn.Linear(ngf * 8 * 3 * 3, nz)
-        self.fc_logvar = nn.Linear(ngf * 8 * 3 * 3, nz)
+        self.fc_mu = nn.Sequential(
+            #nn.Linear(2 * 16 * filt_per_layer, 512),
+            #nn.ReLU(),
+            nn.Linear(2 * 16 * filt_per_layer, z_dim),
+            #nn.ReLU(),
+            #nn.Linear(512, z_dim),
+        )
+        self.fc_logvar = nn.Sequential(
+            #nn.Linear(2 * 16 * filt_per_layer, 512),
+            #nn.ReLU(),
+            nn.Linear(2 * 16 * filt_per_layer, z_dim),
+            #nn.ReLU(),
+            #nn.Linear(512, z_dim),
+        )
 
     def encode(self, x):
         z = self.model(x)
@@ -288,58 +321,70 @@ class Encoder_own(nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
+class Decoder_own_model(nn.Module):
 
-class Decoder_own(nn.Module):
-    def __init__(self, nz, nc, x_dim, ngf, ngpu=None):
-        super(Decoder_own, self).__init__()
-        # nz is the length of z
-        # ngf is the size of the feature maps
-        # nc is the number of channels
-        self.nc = nc
-        self.nz = nz
-        self.ngf = ngf
+    def __init__(self, z_dim, channel_dimenion, x_dim,  # x_dim : total number of pixels
+                 filt_per_layer=128):
+        super(Decoder_own_model, self).__init__()
+        self.z_dim = z_dim
+        self.c_dim = channel_dimenion
+        self.x_dim = x_dim
+        """self.fc = nn.Sequential(
+            nn.Linear(z_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, int(filt_per_layer * self.x_dim / 16)),
+            nn.ReLU()
+        )"""
+        """self.model = nn.Sequential(
+            nn.ConvTranspose2d(filt_per_layer, filt_per_layer, 4, stride=1, padding=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(filt_per_layer, filt_per_layer, 4, stride=2, padding=2),
+            nn.ReLU(),
+            nn.ConvTranspose2d(filt_per_layer, int(channel_dimenion), 4, stride=2, padding=1),
+            nn.Sigmoid()
+        )"""
 
-        #  convTranspose output width = (W_in - 1) * stride - 2*padding + kernel_size
-        #  pytorch convolustions have arguments nn.ConvTranspose2d(input_c, output_c, kernel, stride, padding)
-        self.ngpu = ngpu
         self.model = nn.Sequential(
-
-            # input size = batch, ngf*8, 3, 3
-            Conv_Block_Transpose(ngf * 8, ngf * 7, 3, 1, 1, bias=False),
-            Conv_Block_Transpose(ngf * 7, ngf * 6, 4, 1, 1, bias=False),
-            # output size = batch, ngf*6, 4, 4
-
-            Conv_Block_Transpose(ngf * 6, ngf * 5, 3, 1, 1, bias=False),
-            Conv_Block_Transpose(ngf * 5, ngf * 4, 4, 2, 1, bias=False),
-            # output size = batch, ngf*4, 8, 8
-
-            Conv_Block_Transpose(ngf * 4, ngf * 3, 3, 1, 1, bias=False),
-            Conv_Block_Transpose(ngf * 3, ngf * 2, 4, 2, 1, bias=False),
-            # output size = batch, ngf*2, 16, 16
-
-            Conv_Block_Transpose(ngf * 2, ngf, 3, 1, 1, bias=False),
-            nn.ConvTranspose2d(ngf, nc, 4, 2, 1, bias=False),
-            nn.Tanh()
-            # output size = batch, nc, 32, 32
+            nn.ConvTranspose2d(2 * filt_per_layer, 2 * filt_per_layer, kernel_size=3, output_padding=1, padding=1, stride=2), # 4x4 => 8x8
+            nn.ReLU(),
+            nn.Conv2d(2 * filt_per_layer, 2 * filt_per_layer, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(2 * filt_per_layer, filt_per_layer, kernel_size=3, output_padding=1, padding=1, stride=2),  # 8x8 => 16x16
+            nn.ReLU(),
+            nn.Conv2d(filt_per_layer, filt_per_layer, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(filt_per_layer, channel_dimenion, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32
+            #nn.Tanh()  # The input images is scaled between -1 and 1, hence the output has to be bounded as well
+            nn.Sigmoid()  # Philippe uses a tanh wchich makes no sense to me
         )
 
-        self.fc = nn.Linear(nz, self.ngf * 8 * 3 * 3)
+        self.fc = nn.Sequential(
+            #nn.Linear(z_dim, 512),
+            #nn.ReLU(),
+            #nn.Linear(512, 2 * 16 * filt_per_layer),
+            nn.Linear(z_dim, 2 * 16 * filt_per_layer),
+            nn.ReLU()
+        )
 
     def forward(self, z):
         batch_size = z.shape[0]
-        t = self.fc(z).view(batch_size, self.ngf * 8, 3, 3)
-        x = self.model(t)
+        """t = self.fc(z).view(batch_size, -1,
+                            int(np.sqrt(self.x_dim) / 4),
+                            int(np.sqrt(self.x_dim) / 4))"""
 
+        t = self.fc(z).view(batch_size, -1, 4, 4)
+
+        x = self.model(t)
         return x
 
 
 class Encoder_captain(nn.Module):
-    def __init__(self, latent_variable_size, nc, ngf, ndf, device='cuda'):
+    def __init__(self, latent_variable_size, nc, ngf, ndf, is_cuda=False):
         super(Encoder_captain, self).__init__()
         self.nc = nc
         self.ngf = ngf
         self.ndf = ndf
-        self.device = device
+        self.is_cuda = is_cuda
 
         # Encoder
         self.inplanes = 64
@@ -378,6 +423,7 @@ class Encoder_captain(nn.Module):
         x = self.bn3(x)
         x = self.conv4(x)
         x = self.relu(x)
+
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         x = self.relu(x)
@@ -389,9 +435,10 @@ class Encoder_captain(nn.Module):
 
     def reparametrize(self, mu, logvar):
         std = logvar.mul(0.5).exp_()
-
-        eps = torch.Tensor(std.size()).normal_().to(self.device)
-
+        if self.is_cuda:
+            eps = torch.cuda.FloatTensor(std.size()).normal_()
+        else:
+            eps = torch.FloatTensor(std.size()).normal_()
         eps = Variable(eps)
         return eps.mul(std).add_(mu)
 
@@ -402,25 +449,24 @@ class Encoder_captain(nn.Module):
 
 
 class Decoder_captain(nn.Module):
-    def __init__(self, latent_variable_size, nc, ngf, ndf, device='cuda'):
+    def __init__(self, latent_variable_size, nc, ngf, ndf, is_cuda=False):
         super(Decoder_captain, self).__init__()
         self.nc = nc
         self.ngf = ngf
         self.ndf = ndf
-        self.device = device
+        self.is_cuda = is_cuda
 
         # Decoder
         self.relu = nn.ReLU(inplace=True)
         self.sigmoid = nn.Sigmoid()
         self.fc3 = nn.Linear(latent_variable_size, 500)
-        self.fc4 = nn.Linear(500, 128)  # 14 * 14 * 32 -> 128
+        self.fc4 = nn.Linear(500, 14 * 14 * 32)
 
         #  convTranspose output width = (W_in - 1) * stride - 2*padding + kernel_size
-        self.deconv1 = nn.ConvTranspose2d(32, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.deconv4 = nn.ConvTranspose2d(16, 3, kernel_size=3, stride=2, padding=1, output_padding=1)
-
+        self.deconv1 = nn.ConvTranspose2d(32, 64, kernel_size=4, stride=1, padding=1, output_padding=0)  # stride=2 -> stride=1, out_padding=1 -> 0
+        self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=4, stride=1, padding=1, output_padding=0)  # stride=2 -> stride=1
+        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=3, stride=1, padding=1, output_padding=0)  # stride=2 -> stride=1
+        self.deconv4 = nn.ConvTranspose2d(16, 3, kernel_size=3, stride=2, padding=1, output_padding=1)   # output_padding=1 -> 0
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -436,7 +482,7 @@ class Decoder_captain(nn.Module):
         x = self.fc4(x)
         x = self.relu(x)
         # print((x>0.000).sum())
-        x = x.view(-1, 32, 2, 2)  # 14, 14 -> 2, 2
+        x = x.view(-1, 32, 14, 14)
         x = self.deconv1(x)
         x = self.relu(x)
         x = self.deconv2(x)

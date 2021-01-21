@@ -8,13 +8,13 @@ general:
   progress_bar: True
   n_samples_each_class: 4
   max_images: 8
-  callback_every: 25
+  callback_every: 1
 dataset:
   dataset: "cifar10"
-  mnist_digits: [3,8]
+  mnist_digits: null
 classifier:
   classifier: "cifar10_cnn"
-  model_name: "3_8"
+  model_name: "all"
   epochs: 20
   batch_size: 64
   lr: 0.1
@@ -23,10 +23,10 @@ classifier:
   no_print: True
 vae:
   vae_model: "cifar10_cvae_captain"
-  model_name: "3_8"
+  model_name: "all"
   use_causal: False
   n_alpha: 1
-  n_beta: 127
+  n_beta: 63
   alpha_samples: 25
   beta_samples: 25
   lam_ml: 1
@@ -37,7 +37,7 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 32
-  epochs: 50
+  epochs: 1
 
 
 

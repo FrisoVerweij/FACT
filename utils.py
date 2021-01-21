@@ -1,6 +1,8 @@
 import dataset
 import torch.nn as nn
 import torch
+
+from models import mobilenetv2
 from models import models_classifiers, models_vae, CNN_classifier_author
 import numpy as np
 
@@ -66,6 +68,13 @@ def select_classifier(config):
     elif config["classifier"] == 'cifar10_cnn':
         return models_classifiers.CIFAR10_CNN(output_dim)
 
+    elif config["classifier"] == 'mnist_dummy':
+        return models_classifiers.BiggestDummy()
+
+    elif config["classifier"] == 'mobilenet_v2':
+        mobilenet = mobilenetv2.mobilenet_v2(pretrained=True, num_classes=output_dim)
+        return mobilenet
+
     elif config['classifier'] == 'dummy':
         return models_classifiers.DummyClassifier()
 
@@ -106,10 +115,12 @@ def select_vae_model(config):
             "image_size"])  # note that here we do not square the image size
         decoder = models_vae.Decoder_cifar10_sasha(config['z_dim'], 3, config["image_size"])
     elif config["vae_model"] == "cifar10_cvae_captain":
-        encoder = models_vae.Encoder_captain(config['z_dim'], 3, config["image_size"], config["image_size"],
-                                             config["device"])
-        decoder = models_vae.Decoder_captain(config['z_dim'], 3, config["image_size"], config["image_size"],
-                                             config["device"])
+        encoder = models_vae.Encoder_captain(config['z_dim'], 3, config["image_size"], config["image_size"], config["device"])
+        decoder = models_vae.Decoder_captain(config['z_dim'], 3, config["image_size"], config["image_size"], config["device"])
+    elif config["vae_model"] == "cifar10_cvae_own":
+        encoder = models_vae.Encoder_own_model(config['z_dim'], 3, config["image_size"] ** 2)
+        decoder = models_vae.Decoder_own_model(config['z_dim'], 3, config["image_size"] ** 2)
+ 
     else:
         raise Exception("No valid encoder/decoder selected!")
 
