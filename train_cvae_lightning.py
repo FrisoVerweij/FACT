@@ -13,31 +13,6 @@ from models.models_pl import Generic_model
 from utils import *
 
 
-def get_x_vals(val_loader, n_classes=2, n_for_each_class=4):
-    ###
-
-    # Here we get a sufficient number of samples to get the images from
-    data, targets = next(iter(val_loader))
-    for x, y in val_loader:
-        data = torch.cat([data, x], dim=0)
-        targets = torch.cat([targets, y], dim=0)
-
-        # Here we make sure that we have all the classes and that we have enough samples
-        if len(torch.unique(targets)) >= n_classes:
-            y_val = targets.numpy()
-            indices = []
-            for i in range(n_classes):
-                indices += list(np.where(y_val == i)[0])[:n_for_each_class]
-
-            if indices == n_classes*n_for_each_class:
-                break
-
-    indices = torch.tensor(indices)
-    x_val = torch.index_select(data, 0, indices)
-
-    return x_val
-
-
 def train_cvae_pl(config):
     """
     Function for training and testing a VAE model.
@@ -52,15 +27,7 @@ def train_cvae_pl(config):
     # Select the data
     train_loader, val_loader = select_dataloader(config)
 
-    # Select and load the classifier
-    classifier = select_classifier(config)
-    if config["classifier"] != "mnist_dummy":
-
-        if config["model_name"][-3:] == ".pt":
-            classifier.load_state_dict(
-                torch.load(config['save_dir']  + config['model_name'])['model_state_dict_classifier'])
-        else:
-            classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
+    classifier = load_classifier(config)
 
     # Select the encoder, decoder and optimizer
     encoder, decoder = select_vae_model(config)
@@ -78,10 +45,13 @@ def train_cvae_pl(config):
         number_of_latents = config['n_alpha'] + config['n_beta']
 
     # Create a PyTorch Lightning trainer with the generation callback
-    gen_callback_digit = GenerateCallbackDigit(x_val, dataset=config['dataset'], every_n_epochs=config['callback_every'],
+    gen_callback_digit = GenerateCallbackDigit(x_val, dataset=config['dataset'],
+                                               every_n_epochs=config['callback_every'],
                                                n_samples=n_samples_total, save_to_disk=True)
-    gen_callback_latent = GenerateCallbackLatent(x_val,  dataset=config['dataset'], every_n_epochs=config['callback_every'],
-                                                 latent_dimensions=number_of_latents, n_samples=n_samples_total, save_to_disk=True)
+    gen_callback_latent = GenerateCallbackLatent(x_val, dataset=config['dataset'],
+                                                 every_n_epochs=config['callback_every'],
+                                                 latent_dimensions=number_of_latents, n_samples=n_samples_total,
+                                                 save_to_disk=True)
 
     trainer = pl.Trainer(default_root_dir=config["log_dir"],
                          checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
@@ -98,6 +68,10 @@ def train_cvae_pl(config):
     # Training
     # gen_callback.sample_and_save(trainer, model, epoch=0)  # Initial sample
     trainer.fit(model, train_loader, val_loader)
+
+    ### At the end we save the encoder and decoder in it's enterity
+    torch.save(encoder.state_dict(), config['encoder_path'])
+    torch.save(decoder.state_dict(), config['decoder_path'])
 
 
 if __name__ == "__main__":

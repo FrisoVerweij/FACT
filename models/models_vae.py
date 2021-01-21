@@ -37,6 +37,7 @@ class Encoder(nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
+
 class Decoder(nn.Module):
 
     def __init__(self, z_dim, channel_dimenion, x_dim,  # x_dim : total number of pixels
@@ -102,6 +103,7 @@ class Encoder_cifar10(nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
+
 class Decoder_cifar10(nn.Module):
 
     def __init__(self, z_dim, channel_dimenion, x_dim,  # x_dim : total number of pixels
@@ -140,8 +142,8 @@ class Encoder_cifar10_sasha(nn.Module):
         self.z_dim = z_dim
 
         self.model = nn.Sequential(
-            nn.Conv2d(channel_dimension, filt_per_layer//4 ,kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(filt_per_layer//4),
+            nn.Conv2d(channel_dimension, filt_per_layer // 4, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(filt_per_layer // 4),
             nn.ReLU(),
             nn.Conv2d(filt_per_layer // 4, filt_per_layer // 2, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(filt_per_layer // 2),
@@ -172,6 +174,7 @@ class Encoder_cifar10_sasha(nn.Module):
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
+
 
 class Decoder_cifar10_sasha(nn.Module):
 
@@ -219,8 +222,10 @@ class Conv_Block(nn.Module):
             nn.BatchNorm2d(output),
             nn.ReLU(True),
         )
+
     def forward(self, imgs):
         return self.block(imgs)
+
 
 class Conv_Block_Transpose(nn.Module):
     def __init__(self, input, output, kernel, stride, padding, bias):
@@ -230,8 +235,10 @@ class Conv_Block_Transpose(nn.Module):
             nn.BatchNorm2d(output),
             nn.ReLU(True),
         )
+
     def forward(self, imgs):
         return self.block(imgs)
+
 
 class Encoder_own(nn.Module):
     def __init__(self, nz, nc, x_dim, ngf, ngpu=None):
@@ -246,25 +253,25 @@ class Encoder_own(nn.Module):
         self.model = nn.Sequential(
             # input size = batch, 3, 32, 32
             Conv_Block(nc, ngf, 3, 1, 1, bias=False),
-            Conv_Block(ngf, ngf*2, 4, 1, 0, bias=False),
+            Conv_Block(ngf, ngf * 2, 4, 1, 0, bias=False),
             # output size = batch, ngf*2, 29, 29
 
-            Conv_Block(ngf*2, ngf*3, 3, 1, 1, bias=False),
-            Conv_Block(ngf*3, ngf*4, 4, 2, 1, bias=False),
+            Conv_Block(ngf * 2, ngf * 3, 3, 1, 1, bias=False),
+            Conv_Block(ngf * 3, ngf * 4, 4, 2, 1, bias=False),
             # output size = batch, ngf*4, 14, 14
 
-            Conv_Block(ngf*4, ngf*5, 3, 1, 1, bias=False),
-            Conv_Block(ngf*5, ngf*6, 4, 2, 1, bias=False),
+            Conv_Block(ngf * 4, ngf * 5, 3, 1, 1, bias=False),
+            Conv_Block(ngf * 5, ngf * 6, 4, 2, 1, bias=False),
             # output size = batch, ngf*6, 7, 7
 
-            Conv_Block(ngf*6, ngf*7, 3, 1, 1, bias=False),
-            Conv_Block(ngf*7, ngf*8, 4, 2, 1, bias=False),
+            Conv_Block(ngf * 6, ngf * 7, 3, 1, 1, bias=False),
+            Conv_Block(ngf * 7, ngf * 8, 4, 2, 1, bias=False),
             # output size = batch, ngf*8, 3, 3
 
         )
 
-        self.fc_mu = nn.Linear(ngf*8*3*3, nz)
-        self.fc_logvar = nn.Linear(ngf*8*3*3, nz)
+        self.fc_mu = nn.Linear(ngf * 8 * 3 * 3, nz)
+        self.fc_logvar = nn.Linear(ngf * 8 * 3 * 3, nz)
 
     def encode(self, x):
         z = self.model(x)
@@ -280,6 +287,7 @@ class Encoder_own(nn.Module):
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
+
 
 class Decoder_own(nn.Module):
     def __init__(self, nz, nc, x_dim, ngf, ngpu=None):
@@ -297,30 +305,29 @@ class Decoder_own(nn.Module):
         self.model = nn.Sequential(
 
             # input size = batch, ngf*8, 3, 3
-            Conv_Block_Transpose(ngf*8, ngf*7, 3, 1, 1, bias=False),
-            Conv_Block_Transpose(ngf*7, ngf*6, 4, 1, 1, bias=False),
+            Conv_Block_Transpose(ngf * 8, ngf * 7, 3, 1, 1, bias=False),
+            Conv_Block_Transpose(ngf * 7, ngf * 6, 4, 1, 1, bias=False),
             # output size = batch, ngf*6, 4, 4
 
-            Conv_Block_Transpose(ngf*6, ngf*5, 3, 1, 1, bias=False),
-            Conv_Block_Transpose(ngf*5, ngf*4, 4, 2, 1, bias=False),
+            Conv_Block_Transpose(ngf * 6, ngf * 5, 3, 1, 1, bias=False),
+            Conv_Block_Transpose(ngf * 5, ngf * 4, 4, 2, 1, bias=False),
             # output size = batch, ngf*4, 8, 8
 
-            Conv_Block_Transpose(ngf*4, ngf*3, 3, 1, 1, bias=False),
-            Conv_Block_Transpose(ngf*3, ngf*2, 4, 2, 1, bias=False),
+            Conv_Block_Transpose(ngf * 4, ngf * 3, 3, 1, 1, bias=False),
+            Conv_Block_Transpose(ngf * 3, ngf * 2, 4, 2, 1, bias=False),
             # output size = batch, ngf*2, 16, 16
 
-            Conv_Block_Transpose(ngf*2, ngf, 3, 1, 1, bias=False),
+            Conv_Block_Transpose(ngf * 2, ngf, 3, 1, 1, bias=False),
             nn.ConvTranspose2d(ngf, nc, 4, 2, 1, bias=False),
             nn.Tanh()
             # output size = batch, nc, 32, 32
         )
 
-        self.fc = nn.Linear(nz, self.ngf*8*3*3)
-
+        self.fc = nn.Linear(nz, self.ngf * 8 * 3 * 3)
 
     def forward(self, z):
         batch_size = z.shape[0]
-        t = self.fc(z).view(batch_size, self.ngf*8, 3, 3)
+        t = self.fc(z).view(batch_size, self.ngf * 8, 3, 3)
         x = self.model(t)
 
         return x
@@ -393,6 +400,7 @@ class Encoder_captain(nn.Module):
         z = self.reparametrize(mu, logvar)
         return z, mu, logvar
 
+
 class Decoder_captain(nn.Module):
     def __init__(self, latent_variable_size, nc, ngf, ndf, device='cuda'):
         super(Decoder_captain, self).__init__()
@@ -443,5 +451,3 @@ class Decoder_captain(nn.Module):
     def forward(self, z):
         res = self.decode(z)
         return res
-
-
