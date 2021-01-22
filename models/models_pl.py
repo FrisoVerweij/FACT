@@ -48,6 +48,7 @@ class Generic_model(pl.LightningModule):
         latentsweep_vals = np.arange(-3, 3 + self.config['sweeping_stepsize'], self.config['sweeping_stepsize']).tolist()
         samples = []
         labels = []
+        labels_probs = []
         x_val = x_val.to(self.device)
 
         z, mu, logvar = self.encoder(x_val)
@@ -62,13 +63,16 @@ class Generic_model(pl.LightningModule):
                 y, y_probs = self.classifier(x_generated)
 
                 y = torch.argmax(y_probs, dim=-1)
+                y_prob = torch.max(y_probs, dim=-1)
+                labels.append(y)
+                labels_probs.append(y_prob)
 
                 labels.append(y)
                 samples.append(x_generated.squeeze(0))
 
         self.encoder.train() # make sure to set it back to training
         self.decoder.train()
-        return samples, labels
+        return samples, labels, labels_probs
 
     def configure_optimizers(self):
         # Create optimizer

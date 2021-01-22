@@ -47,11 +47,12 @@ def train_cvae_pl(config):
     # Create a PyTorch Lightning trainer with the generation callback
     gen_callback_digit = GenerateCallbackDigit(x_val, dataset=config['dataset'],
                                                every_n_epochs=config['callback_every'],
-                                               n_samples=n_samples_total, save_to_disk=True)
+                                               n_samples=n_samples_total, save_to_disk=True,
+                                               show_prob=config['show_probs'])
     gen_callback_latent = GenerateCallbackLatent(x_val, dataset=config['dataset'],
                                                  every_n_epochs=config['callback_every'],
                                                  latent_dimensions=number_of_latents, n_samples=n_samples_total,
-                                                 save_to_disk=True)
+                                                 save_to_disk=True, show_prob=config['show_probs'])
 
     callbacks = [gen_callback_digit, gen_callback_latent] if config['callback_digits'] else [gen_callback_latent]
 
