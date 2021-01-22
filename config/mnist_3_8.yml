@@ -7,13 +7,17 @@ general:
   log_dir: "CVAE_logs"
   progress_bar: True
   n_samples_each_class: 3
+  max_images: 8
   callback_every: 1
+  callback_digits: True
+  sweeping_stepsize: 1
+  show_prob: True
 dataset:
   dataset: "mnist"
   mnist_digits: [3,8]
 classifier:
   classifier: "mnist_cnn"
-  model_name: "mnist_3_8"
+  model_name: "3_8"
   epochs: 20
   batch_size: 64
   lr: 0.1
@@ -22,8 +26,8 @@ classifier:
   no_print: True
 vae:
   vae_model: "mnist_cvae"
-  model_name: "mnist_3_8"
-  use_causal: True
+  model_name: "3_8"
+  use_causal: False
   n_alpha: 1
   n_beta: 7
   alpha_samples: 100
@@ -36,9 +40,8 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 30
-  max_images: null
-  sweeping_stepsize: 1
+  epochs: 1
+
 
 
 

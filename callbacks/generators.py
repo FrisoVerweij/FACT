@@ -1,6 +1,8 @@
 import torch
 from torchvision.utils import make_grid, save_image
 import pytorch_lightning as pl
+from torchvision import transforms
+from PIL import Image, ImageDraw, ImageFont
 
 
 class GenerateCallbackDigit(pl.Callback):
@@ -8,7 +10,8 @@ class GenerateCallbackDigit(pl.Callback):
     Creates a plot based around a digit
     '''
 
-    def __init__(self, to_sample_from, dataset, n_samples=5, every_n_epochs=5, save_to_disk=False, border_size=5):
+    def __init__(self, to_sample_from, dataset, n_samples=5, every_n_epochs=5, save_to_disk=False, border_size=5,
+                 show_prob=True):
         """
         Inputs:
             batch_size - Number of images to generate
@@ -20,7 +23,8 @@ class GenerateCallbackDigit(pl.Callback):
         self.to_sample_from = to_sample_from
         self.n_samples = n_samples
         self.save_to_disk = save_to_disk
-        self.border_size = border_size
+        self.border_size = 10 if show_prob else border_size
+        self.show_prob = show_prob
         self.to_rgb = False if dataset == 'cifar10' else True
 
     def on_epoch_end(self, trainer, pl_module):
@@ -44,9 +48,22 @@ class GenerateCallbackDigit(pl.Callback):
 
         # Now we actually loop over our latents
         for i in range(self.n_samples):
-            samples, y, _ = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
-
+            samples, y, y_prob, _ = pl_module.sample(self.to_sample_from[i].unsqueeze(0))
             samples = add_border_to_samples(samples, y, border_size=self.border_size, to_rgb=self.to_rgb)
+
+            if self.show_prob:
+                for j in range(len(samples)):
+                    to_pil = transforms.Compose([transforms.ToPILImage()])
+                    to_tens = transforms.Compose([transforms.ToTensor()])
+
+                    sample = to_pil(samples[j])
+
+                    d = ImageDraw.Draw(sample)
+                    font = ImageFont.truetype("arial.ttf", size=9)
+
+                    d.text((0, 0), str(round(float(y_prob[j][0]), 3)), fill=(255, 255, 255), font=font)
+
+                    samples[j] = to_tens(sample)
 
             grid = make_grid(samples, nrow=7)
             name = 'samples_{}_{}'.format(i, epoch)
@@ -63,7 +80,7 @@ class GenerateCallbackLatent(pl.Callback):
     '''
 
     def __init__(self, to_sample_from, dataset, n_samples=8, latent_dimensions=8, every_n_epochs=5, save_to_disk=False,
-                 border_size=5):
+                 border_size=5, show_prob=True):
         """
         Inputs:
             batch_size - Number of images to generate
@@ -76,7 +93,8 @@ class GenerateCallbackLatent(pl.Callback):
         self.n_samples = n_samples
         self.latent_dimensions = latent_dimensions
         self.save_to_disk = save_to_disk
-        self.border_size = border_size
+        self.border_size = 10 if show_prob else border_size
+        self.show_prob = show_prob
         self.to_rgb = False if dataset == 'cifar10' else True
 
     def on_epoch_end(self, trainer, pl_module):
@@ -108,12 +126,11 @@ class GenerateCallbackLatent(pl.Callback):
         save_image(orgiginal_imgs, trainer.logger.log_dir + "/" + "original_images.png")
       
         sweep_length = pl_module.sweep_length
-        results = create_samples(self.to_sample_from, pl_module, border_size=self.border_size, to_rgb=self.to_rgb, )
+        results = create_samples(self.to_sample_from, pl_module, border_size=self.border_size, to_rgb=self.to_rgb, show_prob=self.show_prob)
         grids = create_latent_grids(results, self.latent_dimensions, nrow=sweep_length)
 
         ### Loop over the latent dimensions
         for i, grid in enumerate(grids):
-
 
             name = 'latent_samples_{}_{}'.format(i, epoch)
             logger = trainer.logger.experiment
@@ -134,7 +151,7 @@ def add_border_to_samples(samples, labels, to_rgb=True, border_size=5):
     result = []
     for sample, label in zip(samples, labels):
         ### Create the border tensor
-        border_tensor = create_border(sample, label, )
+        border_tensor = create_border(sample, label, border_size=border_size)
 
         ### Add border tensor to
         r = combine_border_and_sample(sample, border_tensor, border_size=border_size)
@@ -183,12 +200,27 @@ def combine_border_and_sample(sample, border, border_size=5):
     return result
 
 
-def create_samples(to_sample_from, model, to_rgb=True, border_size=5, ):
+def create_samples(to_sample_from, model, to_rgb=True, border_size=5, show_prob=True):
     results = []
     for i in range(len(to_sample_from)):
-        samples, y, sweep_length = model.sample(to_sample_from[i].unsqueeze(0))
+        samples, y, y_prob, sweep_length = model.sample(to_sample_from[i].unsqueeze(0))
         samples = add_border_to_samples(samples, y, to_rgb=to_rgb, border_size=border_size, )
+
+        if show_prob:
+            for i in range(len(samples)):
+                to_pil = transforms.Compose([transforms.ToPILImage()])
+                to_tens = transforms.Compose([transforms.ToTensor()])
+
+                sample = to_pil(samples[i])
+
+                d = ImageDraw.Draw(sample)
+                font = ImageFont.truetype("arial.ttf", size=9)
+                d.text((0, 0), str(round(float(y_prob[i][0]), 3)), fill=(255, 255, 255), font=font)
+
+                samples[i] = to_tens(sample)
+
         results.append(samples)
+
     return results
 
 
