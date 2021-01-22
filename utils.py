@@ -47,7 +47,7 @@ def select_classifier(config):
 
     if config["classifier"] in ['mnist_cnn', 'fmnist_cnn']:
         if config["model_name"][-3:] == ".pt":
-            print("load .pt")
+            
 
             return CNN_classifier_author.CNN(output_dim)
         else:

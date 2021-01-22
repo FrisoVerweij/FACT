@@ -68,7 +68,7 @@ class Generic_model(pl.LightningModule):
 
         self.encoder.train() # make sure to set it back to training
         self.decoder.train()
-        return samples, labels, len(latentsweep_vals)
+        return samples, labels
 
     def configure_optimizers(self):
         # Create optimizer
