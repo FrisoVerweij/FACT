@@ -50,7 +50,7 @@ def train_cvae(config, dataloader, encoder, decoder, classifier, optimizer):
 if __name__ == "__main__":
     # Parse the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8_final.yml')
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
 
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))

@@ -1,7 +1,6 @@
 import argparse
-import numpy as np
 import time
-import yaml # pip install pyyaml
+import yaml
 from utils import *
 
 
@@ -80,7 +79,7 @@ def train(config, seed):
 
         train_accuracy = 0
 
-    torch.save(model.state_dict(), config['save_dir'] + config['classifier'] + "_" + config['model_name'])
+    torch.save(model.state_dict(), config['save_dir'] + config['model_name'])
     return model
 
 
@@ -88,7 +87,7 @@ def train(config, seed):
 if __name__ == "__main__":
     # Create parser to get hyperparameters from user
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8_final.yml')
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, "r"))
