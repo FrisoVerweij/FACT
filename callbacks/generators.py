@@ -3,6 +3,7 @@ from torchvision.utils import make_grid, save_image
 import pytorch_lightning as pl
 from PIL import Image, ImageDraw, ImageFont
 from torchvision import transforms
+from sys import platform
 
 class GenerateCallbackDigit(pl.Callback):
     '''
@@ -57,7 +58,15 @@ class GenerateCallbackDigit(pl.Callback):
                     sample = to_pil(samples[j])
 
                     d = ImageDraw.Draw(sample)
-                    font = ImageFont.truetype("arial.ttf", size=9)
+
+
+                    if platform == "linux" or platform == "linux2":
+                        font = ImageFont.load_default()
+                    elif platform == "win32":
+                        font = ImageFont.truetype("arial.ttf", size=9)
+                    else:
+                        font = ImageFont.truetype("arial.ttf", size=9)
+
                     d.text((0, 0), str(round(float(y_prob[j][0]), 3)), fill=(255, 255, 255), font=font)
 
                     samples[j] = to_tens(sample)
@@ -123,12 +132,12 @@ class GenerateCallbackLatent(pl.Callback):
         save_image(orgiginal_imgs, trainer.logger.log_dir + "/" + "original_images.png")
       
         sweep_length = pl_module.sweep_length
-        results = create_samples(self.to_sample_from, pl_module, border_size=self.border_size, to_rgb=self.to_rgb, )
+        results = create_samples(self.to_sample_from, pl_module, border_size=self.border_size, to_rgb=self.to_rgb,
+                                 show_prob=self.show_prob)
         grids = create_latent_grids(results, self.latent_dimensions, nrow=sweep_length)
 
         ### Loop over the latent dimensions
         for i, grid in enumerate(grids):
-
 
             name = 'latent_samples_{}_{}'.format(i, epoch)
             logger = trainer.logger.experiment
@@ -212,7 +221,14 @@ def create_samples(to_sample_from, model, to_rgb=True, border_size=5, show_prob=
                 sample = to_pil(samples[j])
 
                 d = ImageDraw.Draw(sample)
-                font = ImageFont.truetype("arial.ttf", size=9)
+
+                if platform == "linux" or platform == "linux2":
+                    font = ImageFont.load_default()
+                elif platform == "win32":
+                    font = ImageFont.truetype("arial.ttf", size=9)
+                else:
+                    font = ImageFont.truetype("arial.ttf", size=9)
+
                 d.text((0, 0), str(round(float(y_prob[j][0]), 3)), fill=(255, 255, 255), font=font)
 
                 samples[j] = to_tens(sample)
