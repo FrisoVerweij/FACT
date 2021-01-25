@@ -1,6 +1,6 @@
 
 general:
-  save_dir: "./pretrained_models/"
+  save_dir: "./pretrained_models_local/"
   device: "cuda"
   seed: 42
   num_workers: 0
@@ -20,7 +20,7 @@ dataset:
 classifier:
   classifier: "fmnist_cnn"
   model_name: "fmnist_0_3_4"
-  epochs: 20
+  epochs: 50
   batch_size: 64
   lr: 0.1
   momentum: 0.5
@@ -36,7 +36,7 @@ vae:
   alpha_samples: 100
   beta_samples: 25
   lam_ml: 0.05
-  batch_size: 64
+  batch_size: 32
   lr: 0.0001
   b1: 0.5
   b2: 0.999

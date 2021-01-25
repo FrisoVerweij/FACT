@@ -133,7 +133,7 @@ class GenerateCallbackLatent(pl.Callback):
       
         sweep_length = pl_module.sweep_length
         results = create_samples(self.to_sample_from, pl_module, border_size=self.border_size, to_rgb=self.to_rgb,
-                                 show_prob=self.show_prob)
+                                 show_probs=self.show_prob)
         grids = create_latent_grids(results, self.latent_dimensions, nrow=sweep_length)
 
         ### Loop over the latent dimensions
@@ -207,13 +207,13 @@ def combine_border_and_sample(sample, border, border_size=5):
     return result
 
 
-def create_samples(to_sample_from, model, to_rgb=True, border_size=5, show_prob=True):
+def create_samples(to_sample_from, model, to_rgb=True, border_size=5, show_probs=True):
     results = []
     for i in range(len(to_sample_from)):
         samples, y, y_prob = model.sample(to_sample_from[i].unsqueeze(0))
         samples = add_border_to_samples(samples, y, to_rgb=to_rgb, border_size=border_size, )
 
-        if show_prob:
+        if show_probs:
             for j in range(len(samples)):
                 to_pil = transforms.Compose([transforms.ToPILImage()])
                 to_tens = transforms.Compose([transforms.ToTensor()])
