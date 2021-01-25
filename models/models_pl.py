@@ -15,7 +15,7 @@ class Generic_model(pl.LightningModule):
 
         self.sweep_length = int(6 / self.config['sweeping_stepsize']) + 1
 
-        self.save_hyperparameters()
+        # self.save_hyperparameters()        <-- Causes cifar-10 vae to freeze?
 
     def forward(self, imgs):
 
@@ -23,9 +23,8 @@ class Generic_model(pl.LightningModule):
 
         x_generated = self.decoder(latent_out)
 
-        causalEffect = 0
         # This loss seemed to work out a lot better for cifar10 for both of the models that we implemented
-        if self.config["vae_model"] in ["cifar10_cvae_sasha", "cifar10_cvae", "cifar10_cvae_own"]:
+        if self.config["vae_model"] == "cifar10_cvae":
             nll = kl_divergence_loss(mu, logvar) + reconstruction_loss(x_generated, imgs)
         else:
             nll, nll_mse, nll_kld = VAE_LL_loss(imgs, x_generated, logvar, mu)
@@ -36,7 +35,6 @@ class Generic_model(pl.LightningModule):
             loss = self.config['lam_ml'] * nll + causalEffect
         else:
             loss = nll
-
         return loss, causalEffect, nll
 
     @torch.no_grad()
@@ -44,7 +42,6 @@ class Generic_model(pl.LightningModule):
         self.encoder.eval() # if we do not do this it raises issues for batch normalization
         self.decoder.eval()
 
-        #latentsweep_vals = [-3., -2., -1., 0., 1., 2., 3.]
         latentsweep_vals = np.arange(-3, 3 + self.config['sweeping_stepsize'], self.config['sweeping_stepsize']).tolist()
         samples = []
         labels = []
@@ -66,8 +63,6 @@ class Generic_model(pl.LightningModule):
                 y_prob = torch.max(y_probs, dim=-1)
                 labels.append(y)
                 labels_probs.append(y_prob)
-
-                labels.append(y)
                 samples.append(x_generated.squeeze(0))
 
         self.encoder.train() # make sure to set it back to training
@@ -87,14 +82,28 @@ class Generic_model(pl.LightningModule):
         self.log("train_NLL", nll, on_step=True, on_epoch=True)
         return loss
 
+    @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         # Make use of the forward function, and add logging statements
+        self.encoder.eval() # if we do not do this it raises issues for batch normalization
+        self.decoder.eval()
+
         loss, causalEffect, nll = self.forward(batch[0])
         self.log("val_loss", loss, on_step=False, on_epoch=True)
         self.log("val_causalEffect", causalEffect, on_step=False, on_epoch=True)
         self.log("val_NLL", nll, on_step=False, on_epoch=True)
 
+        self.encoder.train() # make sure to set it back to training
+        self.decoder.train()
+
+    @torch.no_grad()
     def test_step(self, batch, batch_idx):
+        self.encoder.eval() # if we do not do this it raises issues for batch normalization
+        self.decoder.eval()
+
         # Make use of the forward function, and add logging statements
         L_rec, L_reg, bpd = self.forward(batch[0])
         self.log("test_bpd", bpd)
+
+        self.encoder.train() # make sure to set it back to training
+        self.decoder.train()

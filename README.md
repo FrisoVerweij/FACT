@@ -1,10 +1,7 @@
-Paper reproduction
-
 ## Requirements
 - Numpy
 - PyTorch
 - PyTorch Lightning
-
 
 
 #### Reproducing the experiments
@@ -36,25 +33,31 @@ All hyperparameters are explained below:
 The following hyperparameters general parameters:
 - save_dir:             Directory where to save and load the models
 - device:               Either 'cpu' or 'gpu'
-- seed:                 Seed for reproducibility.
+- seed:                 Seed for reproducibility
 - num_workers:          Number of workers for the dataloader
 - log_dir:              Folder where to store the Tensorboard logs
 - progress_bar:         Indicate whether to show the progress when training with PyTorch Lightning
 - n_samples_each_class: Indicate how many samples are created for each class when displaying the sweeping of the latent variables
+- max_images:		Either an integer to limit the number of generated image, or 'null' to remove limit
+- callback_every:	Generate images on every x epoch
+- callback_digits:	Either True of False. Whether to generate images that display latent changes for each digit
+- sweeping_stepsize:    Increase or decrease to either make the generated images more coarse grained or fine grained
+- show_probs:		Whether to show the classifier probabilities in the image border
+
 
 The following hyperparameters specify the dataset:
 - dataset:              Specifies dataset used. Choices are 'mnist', 'fmnist', or 'cifar10'
-- mnist_digits:         Specifies which classes to include in the training process. Either '1,3,5...' or 'null' for all classes
+- include_classes:      Specifies which classes to include in the training process. Either '1,3,5...' or 'null' for all classes
 
 The following hyperparameters are used when training the classifier:
-- classifier:           Specifies model to train. Choices are 'mnist_cnn', 'cifar_cnn' or 'dummy'.
+- classifier:           Specifies model to train. Choices are 'mnist_cnn', 'fmnist_cnn', 'vgg_11' or 'dummy'
 - model_name:           Name of the saved classifier. Necessary for the generative model to find the classifier
-- epochs: 20            Number of epochs
+- epochs:               Number of epochs
 - batch_size:           Batch size
 - lr:                   Learning rate
 - momentum:             Momentum
 - optimizer:            Either 'SGD' or 'Adam'
-- no_print:             If True, only print 
+- no_print:             If True, only print when validating
 
 The following hyperparameters are used when training the generative model (vae):
 - vae_model:            Specifies model to train. Choices are 'mnist_cvae', 'fmnist_cvae' or 'cifar10_cvae'
@@ -73,6 +76,3 @@ The following hyperparameters are used when training the generative model (vae):
 - optimizer:            Either 'SGD' or 'Adam'
 - image_size:           Size of the input images. 28 means 28x28
 - epochs:               Number of epochs
-- max_images:           Either an integer to limit the number of generated image, or 'null' to remove limit
-- sweeping_stepsize:    Increase or decrease to either make the generated images more coarse grained or fine grained
-

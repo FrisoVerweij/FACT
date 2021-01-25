@@ -1,36 +1,41 @@
 
 general:
-  save_dir: "./pretrained_models_local/"
+  save_dir: "./pretrained_models/"
   device: "cuda"
   seed: 42
   num_workers: 0
   log_dir: "CVAE_logs"
   progress_bar: True
-  n_samples_each_class: 4
+  n_samples_each_class: 1
   max_images: 8
-  callback_every: 1
+  callback_every: 5
   callback_digits: False
+  sweeping_stepsize: 1
+  show_probs: True
+
 dataset:
   dataset: "cifar10"
-  mnist_digits: null
+  include_classes: null
+
 classifier:
-  classifier: "cifar10_cnn"
-  model_name: "all"
-  epochs: 20
+  classifier: "vgg_11"
+  model_name: "vgg_11"
+  epochs: 3  # 20
   batch_size: 64
-  lr: 0.1
+  lr: 0.001
   momentum: 0.5
   optimizer: "SGD"
-  no_print: True
+  no_print: True  # True
+
 vae:
   vae_model: "cifar10_cvae"
-  model_name: "all"
-  use_causal: False
+  model_name: "vgg_11"
+  use_causal: True
   n_alpha: 1
   n_beta: 63
-  alpha_samples: 100
-  beta_samples: 25
-  lam_ml: 0.05
+  alpha_samples: 30
+  beta_samples: 30
+  lam_ml: 0.5
   batch_size: 64
   lr: 0.0005  # 0.0005
   b1: 0.5
@@ -38,7 +43,7 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 32
-  epochs: 10
+  epochs: 30
 
 
 

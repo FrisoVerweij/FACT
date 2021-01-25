@@ -218,7 +218,7 @@ def create_samples(to_sample_from, model, to_rgb=True, border_size=5, show_prob=
                 to_pil = transforms.Compose([transforms.ToPILImage()])
                 to_tens = transforms.Compose([transforms.ToTensor()])
 
-                sample = to_pil(samples[j])
+                sample = to_pil(samples[j].cpu())
 
                 d = ImageDraw.Draw(sample)
 

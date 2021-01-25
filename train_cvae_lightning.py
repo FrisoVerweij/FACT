@@ -57,7 +57,8 @@ def train_cvae_pl(config):
     callbacks = [gen_callback_digit, gen_callback_latent] if config['callback_digits'] else [gen_callback_latent]
 
     trainer = pl.Trainer(default_root_dir=config["log_dir"],
-                         checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
+                         checkpoint_callback=False,
+                         #checkpoint_callback=ModelCheckpoint(save_weights_only=True, mode="min", monitor="val_loss"),
                          gpus=1 if torch.cuda.is_available() else 0,
                          max_epochs=config['epochs'],
                          log_every_n_steps=1,
@@ -79,7 +80,7 @@ def train_cvae_pl(config):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config/mnist_3_8_final.yml')
+    parser.add_argument('--config', default='config/mnist_3_8.yml')
 
     args = parser.parse_args()
     config = yaml.load(open(args.config, "r"))

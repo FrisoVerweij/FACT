@@ -1,27 +1,35 @@
 
 general:
-  save_dir: "./pretrained_models_local/"
+  save_dir: "./pretrained_models/"
   device: "cuda"
   seed: 42
   num_workers: 0
   log_dir: "CVAE_logs"
   progress_bar: True
   n_samples_each_class: 4
+  max_images: null
+  callback_every: 1
+  callback_digits: False
+  sweeping_stepsize: 1
+  show_probs: False
+
 dataset:
   dataset: "fmnist"
-  mnist_digits: null
+  include_classes: null
+
 classifier:
   classifier: "fmnist_cnn"
-  model_name: "all"
+  model_name: "fmnist_all"
   epochs: 20
   batch_size: 64
   lr: 0.1
   momentum: 0.5
   optimizer: "SGD"
   no_print: True
+
 vae:
   vae_model: "fmnist_cvae"
-  model_name: "all"
+  model_name: "fmnist_all"
   use_causal: True
   n_alpha: 1
   n_beta: 7

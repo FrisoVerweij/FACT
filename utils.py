@@ -2,8 +2,7 @@ import dataset
 import torch.nn as nn
 import torch
 
-from models import vgg
-from models import models_classifiers, models_vae, CNN_classifier_author
+from models import models_classifiers, models_vae
 import numpy as np
 
 
@@ -14,20 +13,14 @@ def select_dataloader(config):
     :return: DataLoader
     '''
 
-    # Parse the list of digits to include
-    if config["mnist_digits"] is None:
-        mnist_digits = None
-    else:
-        mnist_digits = config["mnist_digits"]
-
     if config["dataset"] == "mnist":
-        return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
+        return dataset.get_mnist_dataloaders(batch_size=config["batch_size"], digits_to_include=config['include_classes'])
 
     elif config["dataset"] == "fmnist":
-        return dataset.get_fmnist_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
+        return dataset.get_fmnist_dataloaders(batch_size=config["batch_size"], digits_to_include=config['include_classes'])
 
     elif config["dataset"] == "cifar10":
-        return dataset.get_cifar10_dataloaders(batch_size=config["batch_size"], digits_to_include=mnist_digits)
+        return dataset.get_cifar10_dataloaders(batch_size=config["batch_size"], digits_to_include=config['include_classes'])
 
     else:
         raise Exception("No valid dataset selected!")
@@ -40,25 +33,16 @@ def select_classifier(config):
     :return: nn.module
     '''
 
-    if config["mnist_digits"] is None:
+    if config["include_classes"] is None:
         output_dim = 10
     else:
-        output_dim = len(config["mnist_digits"])
+        output_dim = len(config["include_classes"])
 
     if config["classifier"] in ['mnist_cnn', 'fmnist_cnn']:
-        if config["model_name"][-3:] == ".pt":
-            
-
-            return CNN_classifier_author.CNN(output_dim)
-        else:
-            return models_classifiers.MNIST_CNN(output_dim)
-
-    elif config["classifier"] == 'cifar10_cnn':
-        return models_classifiers.CIFAR10_CNN(output_dim)
+        return models_classifiers.MNIST_CNN(output_dim)
 
     elif config["classifier"] == 'vgg_11':
-        vgg_11 = vgg.vgg11_bn(pretrained=True, num_classes=output_dim, device=config['device'])
-        return vgg_11
+        return models_classifiers.VGG11(output_dim)
 
     elif config['classifier'] == 'dummy':
         return models_classifiers.DummyClassifier()
@@ -89,50 +73,41 @@ def select_optimizer(config, model, model_2=None):
 
 
 def select_vae_model(config):
+    '''
+    Selects vae encoder and decoder given the hyperparameters
+    :param config: Set of hyperparameters
+    :return: encoder, decoder
+    '''
     if config["vae_model"] in ["mnist_cvae", "fmnist_cvae"]:
         encoder = models_vae.Encoder(config['z_dim'], 1, config["image_size"] ** 2)
         decoder = models_vae.Decoder(config['z_dim'], 1, config["image_size"] ** 2)
     elif config["vae_model"] == "cifar10_cvae":
-        encoder = models_vae.Encoder_cifar10(config['z_dim'], 3, config["image_size"] ** 2)
-        decoder = models_vae.Decoder_cifar10(config['z_dim'], 3, config["image_size"] ** 2)
-    elif config["vae_model"] == "cifar10_cvae_sasha":
-        encoder = models_vae.Encoder_cifar10_sasha(config['z_dim'], 3, config[
-            "image_size"])  # note that here we do not square the image size
-        decoder = models_vae.Decoder_cifar10_sasha(config['z_dim'], 3, config["image_size"])
-    elif config["vae_model"] == "cifar10_cvae_captain":
-        encoder = models_vae.Encoder_captain(config['z_dim'], 3, config["image_size"], config["image_size"], config["device"])
-        decoder = models_vae.Decoder_captain(config['z_dim'], 3, config["image_size"], config["image_size"], config["device"])
-    elif config["vae_model"] == "cifar10_cvae_own":
-        encoder = models_vae.Encoder_own_model(config['z_dim'], 3, config["image_size"] ** 2)
-        decoder = models_vae.Decoder_own_model(config['z_dim'], 3, config["image_size"] ** 2)
+        encoder = models_vae.Encoder_cifar(config['z_dim'], 3, config["image_size"] ** 2)
+        decoder = models_vae.Decoder_cifar(config['z_dim'], 3, config["image_size"] ** 2)
     else:
         raise Exception("No valid encoder/decoder selected!")
 
     return encoder, decoder
 
 
-def weights_init_normal(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find('linear') != -1:
-        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
-        torch.nn.init.constant_(m.bias.data, 0.0)
+def load_classifier(config):
+    # Select the selected classifier architecture and load the pretrained parameters
+    classifier = select_classifier(config)
+    classifier.load_state_dict(torch.load(config['save_dir'] + config['model_name']))
+    return classifier
 
-def weights_init_kaiming(model):
-    classname = model.__class__.__name__
-    # weight initialization
-    for m in model.modules():
-        if isinstance(m, nn.Conv2d):
-            nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
-            if m.bias is not None:
-                nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.BatchNorm2d):
-            nn.init.constant_(m.weight, 1)
-            nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.Linear):
-            nn.init.normal_(m.weight, 0, 0.01)
-            nn.init.constant_(m.bias, 0)
+
+def load_encoder_decoder(config):
+    # Select the encoder, decoder and optimizer
+    encoder, decoder = select_vae_model(config)
+
+    encoder.load_state_dict(torch.load(config['encoder_path']))
+    decoder.load_state_dict(torch.load(config['decoder_path']))
+    return encoder, decoder
+
+
+def save_model(model, path):
+    torch.save(model.state_dict(), path)
 
 
 def prepare_variables_pl(config):
@@ -140,10 +115,10 @@ def prepare_variables_pl(config):
     z_dim = config['n_alpha'] + config['n_beta']
     x_dim = config['image_size'] ** 2
 
-    if config['mnist_digits'] == None:
+    if config['include_classes'] is None:
         n_classes = 10
     else:
-        n_classes = len(config['mnist_digits'])
+        n_classes = len(config['include_classes'])
 
     params = {
         "number_of_classes": n_classes,
@@ -218,18 +193,6 @@ def to_visualize_config(config):
     return {**config['vae'], **config['general'], **config['dataset'], "classifier": config["classifier"]["classifier"]}
 
 
-def load_classifier(config):
-    # Select and load the classifier
-    classifier = select_classifier(config)
-    if config["classifier"] != "mnist_dummy":
-
-        if config["model_name"][-3:] == ".pt":
-            classifier.load_state_dict(
-                torch.load(config['save_dir'] + config['model_name'])['model_state_dict_classifier'])
-        else:
-            classifier.load_state_dict(
-                torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
-    return classifier
 
 
 def get_x_vals(val_loader, n_classes=2, n_for_each_class=4):
@@ -255,16 +218,3 @@ def get_x_vals(val_loader, n_classes=2, n_for_each_class=4):
     x_val = torch.index_select(data, 0, indices)
 
     return x_val
-
-
-def save_model(model, path):
-    torch.save(model.state_dict(), path)
-
-
-def load_encoder_decoder(config):
-    # Select the encoder, decoder and optimizer
-    encoder, decoder = select_vae_model(config)
-
-    encoder.load_state_dict(torch.load(config['encoder_path']))
-    decoder.load_state_dict(torch.load(config['decoder_path']))
-    return encoder, decoder
