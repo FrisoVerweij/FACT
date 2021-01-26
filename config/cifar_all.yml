@@ -37,7 +37,7 @@ vae:
   beta_samples: 30
   lam_ml: 0.5
   batch_size: 64
-  lr: 0.0005  # 0.0005
+  lr: 0.0005
   b1: 0.5
   b2: 0.999
   weight_decay: 0
