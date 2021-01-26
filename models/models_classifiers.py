@@ -114,7 +114,6 @@ class VGG11(nn.Module):
         )
 
     def forward(self, x):
-        self.eval()
         x = self.features(x)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
