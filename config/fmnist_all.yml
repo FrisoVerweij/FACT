@@ -43,7 +43,7 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 28
-  epochs: 1
+  epochs: 20
 
 
 

@@ -163,8 +163,7 @@ if __name__ == "__main__":
     encoder, decoder = encoder.to(device), decoder.to(device)
 
     # The classifier to use
-    classifier = select_classifier(config)
-    classifier.load_state_dict(torch.load(config['save_dir'] + config['classifier'] + "_" + config['model_name']))
+    classifier = load_classifier(config)
     classifier.to(device)
 
     # The dataset is loaded

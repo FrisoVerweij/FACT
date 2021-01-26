@@ -1,6 +1,6 @@
 
 general:
-  save_dir: "./pretrained_models_local/"
+  save_dir: "./pretrained_models/"
   device: "cuda"
   seed: 42
   num_workers: 0
