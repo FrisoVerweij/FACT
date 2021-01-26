@@ -11,7 +11,7 @@ general:
   callback_every: 5
   callback_digits: False
   sweeping_stepsize: 1
-  show_probs: True
+  show_probs: False
 
 dataset:
   dataset: "cifar10"
@@ -20,12 +20,12 @@ dataset:
 classifier:
   classifier: "vgg_11"
   model_name: "vgg_11"
-  epochs: 3  # 20
+  epochs: 3
   batch_size: 64
   lr: 0.001
   momentum: 0.5
   optimizer: "SGD"
-  no_print: True  # True
+  no_print: True
 
 vae:
   vae_model: "cifar10_cvae"
@@ -43,9 +43,4 @@ vae:
   weight_decay: 0
   optimizer: "Adam"
   image_size: 32
-  epochs: 30
-
-
-
-
-
+  epochs: 20
