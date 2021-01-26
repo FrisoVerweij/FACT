@@ -1,1 +1,3 @@
 VGG_11 file was too large! GitHub does not accept files over 100MB.
+Therefore, you can download the model using the following link: https://drive.google.com/file/d/1GCxf3hcGOJdFJimyDzSoE6K0vDcYXthx/view?usp=sharing
+If the link does not work, you can request the model by emailing friso.verweij@student.uva.nl.
