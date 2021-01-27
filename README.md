@@ -2,6 +2,7 @@
 - Numpy
 - PyTorch
 - PyTorch Lightning
+- yaml
 
 
 #### Reproducing the experiments
