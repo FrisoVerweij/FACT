@@ -14,7 +14,7 @@ In general every experiment consists of 2 parts.
 Both scripts have one argument that is used namely the `--config` argument. 
 In the directory `./config` you can find the config files for all the experiments
 
-There are some notable exceptions. For Fashionmnist 034 we used the pretrained classifier of the authors.
+For the CIFAR-10 experiment, we used a pretrained VGG-11 classifier.
 This means that the classifier does not have to be trained in that case. 
 
 ### Creating a classifier
