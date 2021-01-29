@@ -4,6 +4,7 @@
 - PyTorch Lightning
 - yaml
 
+Please use the environment `env.yml` to run the code.
 
 #### Reproducing the experiments
 
