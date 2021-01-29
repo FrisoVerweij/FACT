@@ -4,7 +4,7 @@
 - PyTorch Lightning
 - yaml
 
-One could use `env.yml` to install an anaconda environment with the all the dependencies. Note that it could be the case that there is a mismatch in the cuda version. Make sure to alter the env.yml file accordingly if this results in errors.
+One could use `env.yml` to install an anaconda environment with the all the dependencies. Note that it could be the case that there is a mismatch in the cuda version (one used in `env.yml` is 10.1.x) Make sure to alter the env.yml file accordingly if this results in errors.
 
 #### Reproducing the experiments
 
